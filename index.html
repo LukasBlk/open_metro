@@ -82,7 +82,7 @@ button{transition:background .15s,box-shadow .15s,border-color .15s,color .15s}
 <div id="msg" data-def="1">Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.</div>
 <div id="over"><div id="ot"></div><div id="ob"><button id="rs">Hrát znovu</button><button id="rm">Menu</button></div></div>
 <div id="rw"><div id="rwc"><div id="rwt">Week completed!</div><div id="rwn">You received a new locomotive</div><div id="rws">Choose reward</div><div id="rwb"></div></div></div>
-<div id="ver">v0.59</div>
+<div id="ver">v0.60</div>
 <div id="credit">Made by BLK in Czech Republic - 2026</div>
 <div id="menu"><div id="mt">OpenMetro</div><div id="mlv"></div><div id="lang"></div></div>
 <script>
@@ -188,12 +188,17 @@ function riverPts(){return RIVERS.map(r=>{const pl=(r.p||r).map(p=>[p[0]*W,p[1]*
 function inWater(x,y,rp){for(const pl of rp)for(let k=0;k<pl.length-1;k++)if(dseg(x,y,pl[k],pl[k+1])<(pl.w||RW)/2)return true;return false}
 function nearWater(x,y){const rp=riverPts();for(const pl of rp)for(let k=0;k<pl.length-1;k++)if(dseg(x,y,pl[k],pl[k+1])<(pl.w||RW)/2+28)return true;return false}
 function crossings(p){
-  const rp=riverPts();let n=0,prev=false;
-  for(let k=0;k<p.length-1;k++){
-    const a=p[k],b=p[k+1],l=Math.hypot(b[0]-a[0],b[1]-a[1]),m=Math.max(1,Math.ceil(l/4));
-    for(let s=0;s<=m;s++){const w=inWater(a[0]+(b[0]-a[0])*s/m,a[1]+(b[1]-a[1])*s/m,rp);if(w&&!prev)n++;prev=w}
+  // jeden tunel na každou řeku, kterou úsek přejede (opakovaný přejezd téže řeky se počítá jednou)
+  let n=0;
+  for(const pl of riverPts()){
+    let hit=false;
+    for(let k=0;k<p.length-1&&!hit;k++){
+      const a=p[k],b=p[k+1],l=Math.hypot(b[0]-a[0],b[1]-a[1]),m=Math.max(1,Math.ceil(l/4));
+      for(let s=0;s<=m;s++)if(inWater(a[0]+(b[0]-a[0])*s/m,a[1]+(b[1]-a[1])*s/m,[pl])){hit=true;break}
+    }
+    if(hit)n++;
   }
-  return n>0?1:0; // jeden tunel na úsek mezi dvěma stanicemi, bez ohledu na počet přejezdů vody
+  return n;
 }
 function tunnelsUsed(ov,tmp){
   let u=0;
