@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="cs"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mini Metro – prototyp</title>
+<style>
+:root{--bg:#f4f1ea;--fg:#2a2a2a;--bar:#e6e1d5;--st:#fff;--bd:#c9c3b3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1d20;--fg:#e8e6e1;--bar:#2a2b30;--st:#1c1d20;--bd:#444650}}
+:root[data-theme="dark"]{--bg:#1c1d20;--fg:#e8e6e1;--bar:#2a2b30;--st:#1c1d20;--bd:#444650}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:14px system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column;overflow:hidden}
+#cv{flex:1;min-height:0;width:100%;display:block;cursor:pointer;touch-action:manipulation}
+#bar{background:var(--bar);border-top:1px solid var(--bd);padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+button{font:inherit;color:var(--fg);background:var(--bg);border:2px solid var(--bd);border-radius:8px;padding:6px 10px;cursor:pointer}
+button.ln{border-color:var(--c);font-weight:600}
+button.ln.on{background:var(--c);color:#fff}
+#hud{margin-left:auto;font-weight:600}
+#msg{flex-basis:100%;opacity:.7;font-size:12px;min-height:15px}
+#over{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:rgba(0,0,0,.55);color:#fff;font-size:22px;text-align:center}
+</style></head><body>
+<canvas id="cv"></canvas>
+<div id="bar"></div>
+<div id="over"><div id="ot"></div><button id="rs">Hrát znovu</button></div>
+<script>
+const COL=['#e0453a','#2b7bd6','#2fa05a'],CAP=6,SPEED=90,R=15,MAXS=10;
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),bar=document.getElementById('bar');
+let W,H,S,adj,paused=false,last=0;
+function resize(){const d=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0)}
+addEventListener('resize',resize);
+const pos=s=>[s.fx*W,s.fy*H];
+
+function reset(){
+  S={t:0,score:0,stations:[],lines:COL.map((c,i)=>({i,c,st:[],trains:[]})),pool:3,sel:0,spawnP:1,spawnS:20,poolT:0,over:false};
+  for(let i=0;i<4;i++)addStation(true);
+  buildAdj();document.getElementById('over').style.display='none';ui();
+}
+function addStation(init){
+  const n=S.stations.length,act=n>=6?['c','t','s','d']:['c','t','s'];
+  for(let k=0;k<80;k++){
+    const fx=init?.3+Math.random()*.4:.08+Math.random()*.84,fy=init?.3+Math.random()*.4:.1+Math.random()*.8;
+    if(S.stations.every(o=>Math.hypot((o.fx-fx)*W,(o.fy-fy)*H)>(init?90:120))||k==79){
+      S.stations.push({fx,fy,shape:n<3?act[n]:act[Math.floor(Math.random()*act.length)],pax:[],over:0});return}
+  }
+}
+function buildAdj(){
+  adj=S.stations.map(()=>new Set());
+  for(const L of S.lines)for(let i=0;i<L.st.length-1;i++){adj[L.st[i]].add(L.st[i+1]);adj[L.st[i+1]].add(L.st[i])}
+}
+function nextHop(f,sh){
+  const first=new Map([[f,null]]),q=[f];
+  while(q.length){const u=q.shift();for(const v of adj[u]){
+    if(first.has(v))continue;first.set(v,u===f?v:first.get(u));
+    if(S.stations[v].shape===sh)return first.get(v);q.push(v)}}
+  return null;
+}
+function spawnPax(){
+  const shapes=[...new Set(S.stations.map(s=>s.shape))],s=S.stations[Math.floor(Math.random()*S.stations.length)];
+  const opts=shapes.filter(x=>x!==s.shape);if(!opts.length)return;
+  s.pax.push({shape:opts[Math.floor(Math.random()*opts.length)]});
+}
+function stop(tr,s,n){
+  for(const p of [...tr.pax]){
+    if(p.shape===s.shape){tr.pax.splice(tr.pax.indexOf(p),1);S.score++;continue}
+    const h=nextHop(S.stations.indexOf(s),p.shape);
+    if(h!==null&&h!==n){tr.pax.splice(tr.pax.indexOf(p),1);s.pax.push(p)}
+  }
+  for(const p of [...s.pax]){
+    if(tr.pax.length>=CAP)break;
+    if(nextHop(S.stations.indexOf(s),p.shape)===n){s.pax.splice(s.pax.indexOf(p),1);tr.pax.push(p)}
+  }
+}
+function move(L,tr,dt){
+  const st=L.st;if(st.length<2)return;
+  const ia=st.indexOf(tr.a),ib=st.indexOf(tr.b);
+  if(ia<0||ib<0||Math.abs(ia-ib)!==1){tr.a=st[0];tr.b=st[1];tr.t=0;tr.wait=0;return}
+  if(tr.wait>0){tr.wait-=dt;return}
+  tr.t+=SPEED*dt/(plen(route(L,tr.a,tr.b))||1);
+  if(tr.t>=1){
+    const nx=st[ib+(ib-ia)]!==undefined?st[ib+(ib-ia)]:st[ia];
+    stop(tr,S.stations[tr.b],nx);
+    tr.a=tr.b;tr.b=nx;tr.t=0;tr.wait=.8;
+  }
+}
+function update(dt){
+  S.t+=dt;
+  if((S.spawnP-=dt)<=0){S.spawnP=Math.max(1.2,2.6-S.t/150);spawnPax()}
+  if((S.spawnS-=dt)<=0){S.spawnS=20;if(S.stations.length<MAXS){addStation();msg('Nová stanice!')}}
+  if((S.poolT+=dt)>=30){S.poolT=0;S.pool++;ui();msg('Máš nový vlak k nasazení.')}
+  for(const L of S.lines)for(const tr of L.trains)move(L,tr,dt);
+  for(const s of S.stations){
+    if(s.pax.length>=8)s.over+=dt;else s.over=Math.max(0,s.over-dt*2);
+    if(s.over>14&&!S.over){S.over=true;document.getElementById('ot').innerHTML='Konec hry<br>Přepravených cestujících: '+S.score;document.getElementById('over').style.display='flex'}
+  }
+}
+function poly(n,a0,x,y,r){ctx.beginPath();for(let i=0;i<n;i++){const a=a0+i*2*Math.PI/n;ctx[i?'lineTo':'moveTo'](x+Math.cos(a)*r,y+Math.sin(a)*r)}ctx.closePath()}
+function shp(sh,x,y,r){
+  if(sh==='c'){ctx.beginPath();ctx.arc(x,y,r,0,7)}
+  else if(sh==='t')poly(3,-Math.PI/2,x,y,r*1.2);
+  else if(sh==='s')poly(4,-Math.PI/4,x,y,r*1.15);
+  else poly(4,-Math.PI/2,x,y,r*1.25);
+}
+function offs(L,a,b){
+  const lo=Math.min(a,b),hi=Math.max(a,b),[x1,y1]=pos(S.stations[lo]),[x2,y2]=pos(S.stations[hi]),d=Math.hypot(x2-x1,y2-y1)||1,k=(L.i-1)*8;
+  return [-(y2-y1)/d*k,(x2-x1)/d*k];
+}
+// trasa jen vodorovně/svisle a pod 45°: nejdřív rovný úsek, pak diagonála
+function route(L,a,b){
+  const lo=Math.min(a,b),hi=Math.max(a,b),P=pos(S.stations[lo]),Q=pos(S.stations[hi]);
+  const dx=Q[0]-P[0],dy=Q[1]-P[1],adx=Math.abs(dx),ady=Math.abs(dy),sx=Math.sign(dx),sy=Math.sign(dy);
+  const M=adx>=ady?[P[0]+sx*(adx-ady),P[1]]:[P[0],P[1]+sy*(ady-adx)];
+  const [ox,oy]=offs(L,a,b),pts=[P,M,Q].map(p=>[p[0]+ox,p[1]+oy]);
+  return a<b?pts:pts.reverse();
+}
+function plen(p){let s=0;for(let i=0;i<p.length-1;i++)s+=Math.hypot(p[i+1][0]-p[i][0],p[i+1][1]-p[i][1]);return s}
+function at(p,t){
+  let r=t*plen(p),ang=0;
+  for(let i=0;i<p.length-1;i++){
+    const dx=p[i+1][0]-p[i][0],dy=p[i+1][1]-p[i][1],l=Math.hypot(dx,dy);
+    if(l<1e-6)continue;ang=Math.atan2(dy,dx);
+    if(r<=l+1e-6){const f=Math.min(1,r/l);return [p[i][0]+dx*f,p[i][1]+dy*f,ang]}
+    r-=l;
+  }
+  const e=p[p.length-1];return [e[0],e[1],ang];
+}
+function draw(){
+  const cs=getComputedStyle(document.documentElement),fg=cs.getPropertyValue('--fg').trim(),stc=cs.getPropertyValue('--st').trim();
+  ctx.clearRect(0,0,W,H);ctx.lineCap='round';ctx.lineJoin='round';
+  for(const L of S.lines){
+    ctx.strokeStyle=L.c;ctx.lineWidth=7;ctx.globalAlpha=L.i===S.sel?1:.8;
+    for(let i=0;i<L.st.length-1;i++){
+      const p=route(L,L.st[i],L.st[i+1]);
+      ctx.beginPath();ctx.moveTo(p[0][0],p[0][1]);for(const q of p.slice(1))ctx.lineTo(q[0],q[1]);ctx.stroke();
+    }
+  }
+  ctx.globalAlpha=1;
+  S.stations.forEach((s,id)=>{
+    const [x,y]=pos(s);
+    const sl=S.lines[S.sel];
+    if(sl.st[sl.st.length-1]===id){ctx.strokeStyle=sl.c;ctx.lineWidth=3;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(x,y,R+9,0,7);ctx.stroke();ctx.setLineDash([])}
+    if(s.over>0){ctx.strokeStyle='#e0453a';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x,y,R+5,-Math.PI/2,-Math.PI/2+Math.min(1,s.over/14)*2*Math.PI);ctx.stroke()}
+    ctx.fillStyle=stc;ctx.strokeStyle=fg;ctx.lineWidth=3;shp(s.shape,x,y,R-3);ctx.fill();ctx.stroke();
+    ctx.fillStyle=fg;s.pax.slice(0,12).forEach((p,k)=>{shp(p.shape,x+R+12+(k%4)*11,y-8+Math.floor(k/4)*11,4);ctx.fill()});
+  });
+  for(const L of S.lines)for(const tr of L.trains){
+    if(L.st.length<2||!S.stations[tr.a]||!S.stations[tr.b])continue;
+    const [x,y,ang]=at(route(L,tr.a,tr.b),tr.t);
+    ctx.save();ctx.translate(x,y);ctx.rotate(ang);
+    ctx.fillStyle=L.c;ctx.strokeStyle=fg;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-17,-9,34,18,4);ctx.fill();ctx.stroke();
+    ctx.rotate(-ang);ctx.fillStyle='#fff';
+    tr.pax.forEach((p,k)=>{shp(p.shape,-10+(k%3)*10,-5+Math.floor(k/3)*10,3.2);ctx.fill()});
+    ctx.restore();
+  }
+  document.getElementById('hud').textContent='Skóre: '+S.score+' · Čas: '+Math.floor(S.t)+' s';
+}
+function loop(t){
+  const dt=Math.min(.05,(t-last)/1000||0);last=t;
+  if(!paused&&!S.over)update(dt);
+  draw();requestAnimationFrame(loop);
+}
+function msg(t){document.getElementById('msg').textContent=t}
+function ui(){
+  bar.innerHTML='';
+  S.lines.forEach((L,i)=>{
+    const b=document.createElement('button');b.className='ln'+(i===S.sel?' on':'');b.style.setProperty('--c',L.c);
+    b.textContent='Linka '+(i+1)+' ('+L.trains.length+')';b.onclick=()=>{S.sel=i;ui()};bar.appendChild(b);
+  });
+  const add=document.createElement('button');add.textContent='+ vlak ('+S.pool+')';
+  add.onclick=()=>{
+    const L=S.lines[S.sel];
+    if(L.st.length<2)return msg('Nejdřív propoj linku alespoň dvěma stanicemi.');
+    if(S.pool<1)return msg('Žádný volný vlak, počkej na další.');
+    S.pool--;L.trains.push({a:L.st[0],b:L.st[1],t:0,wait:.3,pax:[]});ui();
+  };
+  const clr=document.createElement('button');clr.textContent='Smazat linku';
+  clr.onclick=()=>{const L=S.lines[S.sel];S.pool+=L.trains.length;L.trains=[];L.st=[];buildAdj();ui()};
+  const ps=document.createElement('button');ps.textContent=paused?'Pokračovat':'Pauza';
+  ps.onclick=()=>{paused=!paused;ui()};
+  const hud=document.createElement('span');hud.id='hud';
+  const m=document.createElement('div');m.id='msg';
+  m.textContent=document.getElementById('msg')?document.getElementById('msg').textContent:'';
+  bar.append(add,clr,ps,hud,m);
+  if(!m.textContent)m.textContent='Vyber linku a klikej na stanice, přidají se na její konec. Klik na poslední stanici ji odebere.';
+}
+cv.addEventListener('click',e=>{
+  if(S.over)return;
+  const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+  let best=-1,bd=R+14;
+  S.stations.forEach((s,i)=>{const [x,y]=pos(s),d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=i}});
+  if(best<0)return;
+  const L=S.lines[S.sel];
+  if(L.st[L.st.length-1]===best)L.st.pop();
+  else if(!L.st.includes(best))L.st.push(best);
+  buildAdj();ui();
+});
+addEventListener('keydown',e=>{
+  if('123'.includes(e.key)){S.sel=+e.key-1;ui()}
+  if(e.code==='Space'){paused=!paused;ui();e.preventDefault()}
+});
+document.getElementById('rs').onclick=()=>{reset()};
+resize();reset();requestAnimationFrame(loop);
+</script></body></html>
