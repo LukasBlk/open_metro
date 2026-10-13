@@ -1,49 +1,249 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="cs"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Mini Metro – prototyp</title>
 <style>
-:root{--bg:#f4f1ea;--fg:#2a2a2a;--bar:#e6e1d5;--st:#fff;--bd:#c9c3b3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1d20;--fg:#e8e6e1;--bar:#2a2b30;--st:#1c1d20;--bd:#444650}}
-:root[data-theme="dark"]{--bg:#1c1d20;--fg:#e8e6e1;--bar:#2a2b30;--st:#1c1d20;--bd:#444650}
+:root{--water:#c3dcec;--bg:#f4f1ea;--fg:#2a2a2a;--bar:#e6e1d5;--st:#fff;--bd:#c9c3b3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--water:#2b4a62;--bg:#1c1d20;--fg:#e8e6e1;--bar:#2a2b30;--st:#1c1d20;--bd:#444650}}
+:root[data-theme="dark"]{--water:#2b4a62;--bg:#1c1d20;--fg:#e8e6e1;--bar:#2a2b30;--st:#1c1d20;--bd:#444650}
 html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:14px system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column;overflow:hidden}
-#cv{flex:1;min-height:0;width:100%;display:block;cursor:pointer;touch-action:manipulation}
-#bar{background:var(--bar);border-top:1px solid var(--bd);padding:8px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+#cv{flex:1;min-height:0;width:100%;display:block;cursor:pointer;touch-action:none}
+#top{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:auto;display:flex;gap:8px;align-items:center;padding:8px 12px;pointer-events:none}
+#top>*{pointer-events:auto}
+.side{position:fixed;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;padding:10px;background:var(--bar);border:1px solid var(--bd);border-radius:16px;touch-action:none;user-select:none}
+.side:empty{display:none}
+#left{left:max(8px,env(safe-area-inset-left,0px))}
+#right{right:max(8px,env(safe-area-inset-right,0px));max-height:calc(100% - 190px);overflow-y:auto}
+.tr{display:flex;flex-direction:column;align-items:center;gap:2px;color:#000;cursor:grab;touch-action:none;font-size:15px;min-width:34px}
+.tr b{font-weight:700;color:var(--fg)}
+.tr.empty{color:#8a8f98;cursor:default}
+.tr.empty b{color:#8a8f98}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tr:not(.empty){color:#fff}}
 button{font:inherit;color:var(--fg);background:var(--bg);border:2px solid var(--bd);border-radius:8px;padding:6px 10px;cursor:pointer}
-button.ln{border-color:var(--c);font-weight:600}
-button.ln.on{background:var(--c);color:#fff}
-#hud{margin-left:auto;font-weight:600}
-#msg{flex-basis:100%;opacity:.7;font-size:12px;min-height:15px}
-#over{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:rgba(0,0,0,.55);color:#fff;font-size:22px;text-align:center}
+button.ln{width:42px;height:42px;border-radius:50%;border:3px solid var(--bg);background:var(--c);color:#fff;font-weight:700;font-size:16px;padding:0}
+button.ln.on{box-shadow:0 0 0 3px var(--fg)}
+#hud{margin-right:auto;font-weight:600}
+#msg{position:fixed;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);opacity:.7;font-size:12px;text-align:center;pointer-events:none;width:max-content;max-width:80%}
+#over{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:36px;padding:16px;box-sizing:border-box;background:color-mix(in srgb,var(--bg) 92%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:var(--fg);text-align:center}
+#ot{display:flex;flex-direction:column;align-items:center;gap:14px}
+.ot1{font-size:clamp(40px,9vw,76px);font-weight:800;letter-spacing:-1px}
+.ot2{display:flex;flex-direction:column;align-items:center;gap:2px}
+.ot2 b{font-size:clamp(34px,7vw,56px);font-weight:800}
+.ot2 span{font-size:16px;opacity:.65;font-weight:600}
+#ob{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+#ob button{font-size:18px;font-weight:700;padding:14px 30px;border-radius:14px;border:3px solid var(--fg);background:var(--st);color:var(--fg)}
+#ob button:hover{background:var(--fg);color:var(--bg);box-shadow:0 0 0 4px var(--bd)}
+#ob button#rs{background:var(--fg);color:var(--bg)}
+#ob button#rs:hover{background:var(--st);color:var(--fg)}
+#clock{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:max(12px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;align-items:flex-end;gap:6px;user-select:none}
+#cinfo{font-weight:600;font-size:13px}
+#crow{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px 14px}
+#days{display:flex;gap:5px}
+.dy{width:30px;height:30px;box-sizing:border-box;border-radius:50%;border:2px solid var(--fg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:linear-gradient(90deg,var(--bd) var(--p,0%),var(--st) var(--p,0%))}
+.dy.cur{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--fg)}
+#spd{display:flex;gap:4px}
+#spd button{padding:0 8px;height:30px;min-width:32px;display:flex;align-items:center;justify-content:center}
+#spd button.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+@media (max-width:640px){.dy{width:24px;height:24px;font-size:9px}#days{gap:3px}}
+#rw{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55)}
+#rwc{background:var(--bar);color:var(--fg);padding:24px 30px;border-radius:18px;border:1px solid var(--bd);text-align:center;display:flex;flex-direction:column;gap:6px}
+#rwt{font-size:24px;font-weight:700}
+#rwn{font-size:15px;font-weight:600;margin-top:4px}
+#rws{font-size:15px;opacity:.75;margin-top:10px}
+#rwb{display:flex;gap:14px;margin-top:14px;justify-content:center}
+.rb{width:88px;height:88px;border-radius:16px;display:flex;align-items:center;justify-content:center;padding:0}
+.rb:hover{background:var(--bd)}
+.tr.static{cursor:default}
+#mb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:max(12px,env(safe-area-inset-left,0px))}
+#menu{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:40px;padding:16px;box-sizing:border-box;overflow:auto}
+#mt{font-size:clamp(40px,9vw,76px);font-weight:800;letter-spacing:-1px}
+#mlv{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
+.lv{display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;background:none;border:none;padding:0}
+.lv canvas{width:150px;height:150px;border:3px solid var(--fg);border-radius:14px;background:var(--st);display:block}
+.lv:hover canvas{box-shadow:0 0 0 4px var(--bd)}
+.lv span{font-size:18px;font-weight:700}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0}}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+#rw,#over,#menu{animation:fadeIn .25s ease}
+#rwc{animation:pop .3s cubic-bezier(.2,.9,.3,1.15)}
+#rw.out{animation:fadeOut .22s ease forwards}
+button{transition:background .15s,box-shadow .15s,border-color .15s,color .15s}
+#lang{display:flex;gap:8px;align-items:center;font-size:14px}#lang span{opacity:.6;margin-right:4px}#lang button{font:inherit;padding:6px 12px;border-radius:8px;border:2px solid currentColor;background:transparent;color:inherit;cursor:pointer;opacity:.6}#lang button.on{opacity:1;font-weight:700}
+#credit{position:fixed;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));font-size:12px;opacity:.5;pointer-events:none;z-index:50;text-align:right}
+#ver{position:fixed;left:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));font-size:12px;opacity:.5;pointer-events:none;z-index:50}
 </style></head><body>
 <canvas id="cv"></canvas>
-<div id="bar"></div>
-<div id="over"><div id="ot"></div><button id="rs">Hrát znovu</button></div>
+<div id="clock"><div id="cinfo"></div><div id="crow"><div id="days"></div><div id="spd"></div></div></div>
+<button id="mb">Menu</button>
+<div id="left" class="side"></div><div id="right" class="side"></div>
+<div id="msg" data-def="1">Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.</div>
+<div id="over"><div id="ot"></div><div id="ob"><button id="rs">Hrát znovu</button><button id="rm">Menu</button></div></div>
+<div id="rw"><div id="rwc"><div id="rwt">Week completed!</div><div id="rwn">You received a new locomotive</div><div id="rws">Choose reward</div><div id="rwb"></div></div></div>
+<div id="ver">v0.38</div>
+<div id="credit">Made by BLK in Czech Republic - 2026</div>
+<div id="menu"><div id="mt">OpenMetro</div><div id="mlv"></div><div id="lang"></div></div>
 <script>
-const COL=['#e0453a','#2b7bd6','#2fa05a'],CAP=6,SPEED=90,R=15,MAXS=10;
+const COL=['#e0453a','#2b7bd6','#2fa05a','#f08a24','#8e4fc4','#e05fa0','#1fb5b0','#8b5a2b','#c9a800','#34408f'],MAXL=10,CAP=8,VMAX=110,ACC=240,VMIN=14,R=15,MAXS=10;
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),bar=document.getElementById('bar');
-let W,H,S,adj,paused=false,last=0;
-function resize(){const d=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0)}
+let W,H,S,adj,paused=false,last=0,FDT=.016,DPR=1,cam={x:0,y:0,z:1},pan=null;
+function resize(){const d=DPR=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);if(S&&S.lines)ui()}
 addEventListener('resize',resize);
+new ResizeObserver(resize).observe(cv);
 const pos=s=>[s.fx*W,s.fy*H];
 
 function reset(){
-  S={t:0,score:0,stations:[],lines:COL.map((c,i)=>({i,c,st:[],trains:[]})),pool:3,sel:0,spawnP:1,spawnS:20,poolT:0,over:false};
+  S={t:0,score:0,stations:[],lines:COL.slice(0,3).map((c,i)=>({i,c,st:[],trains:[]})),pool:3,sel:0,spawnP:1,spawnS:20,poolT:0,over:false,ghosts:[],fx:[],weeksDone:0,reward:false,tunnels:2};
   for(let i=0;i<4;i++)addStation(true);
-  buildAdj();document.getElementById('over').style.display='none';ui();
+  segAnim.clear();buildAdj();document.getElementById('over').style.display='none';document.getElementById('rw').style.display='none';ui();
 }
 function addStation(init){
   const n=S.stations.length,act=n>=6?['c','t','s','d']:['c','t','s'];
   for(let k=0;k<80;k++){
-    const fx=init?.3+Math.random()*.4:.08+Math.random()*.84,fy=init?.3+Math.random()*.4:.1+Math.random()*.8;
-    if(S.stations.every(o=>Math.hypot((o.fx-fx)*W,(o.fy-fy)*H)>(init?90:120))||k==79){
+    const fx=init?.3+Math.random()*.4:.12+Math.random()*.76,fy=init?.3+Math.random()*.4:.1+Math.random()*.8;
+    if((S.stations.every(o=>Math.hypot((o.fx-fx)*W,(o.fy-fy)*H)>(init?90:120))&&!nearWater(fx*W,fy*H))||k==79){
       S.stations.push({fx,fy,shape:n<3?act[n]:act[Math.floor(Math.random()*act.length)],pax:[],over:0});return}
   }
 }
 function buildAdj(){
   adj=S.stations.map(()=>new Set());
-  for(const L of S.lines)for(let i=0;i<L.st.length-1;i++){adj[L.st[i]].add(L.st[i+1]);adj[L.st[i+1]].add(L.st[i])}
+  for(const L of S.lines)for(let i=0;i<nseg(L);i++){const a=L.st[i],b=sb(L,i);adj[a].add(b);adj[b].add(a)}
+}
+// pomocné funkce pro linky a smyčky
+function nseg(L){const n=L.st.length;return n<2||L.dying?0:L.loop?n:n-1}
+function sb(L,i){return L.st[(i+1)%L.st.length]}
+function adjIdx(L,x,y){const n=L.st.length,d=Math.abs(x-y);return d===1||(!!L.loop&&n>2&&d===n-1)}
+function nearOn(p,mx,my){
+  let best=null,acc=0;const tot=plen(p)||1;
+  for(let k=0;k<p.length-1;k++){
+    const a=p[k],b=p[k+1],dx=b[0]-a[0],dy=b[1]-a[1],l2=dx*dx+dy*dy,l=Math.sqrt(l2);
+    if(l<1e-6)continue;
+    const t=Math.max(0,Math.min(1,((mx-a[0])*dx+(my-a[1])*dy)/l2)),cx=a[0]+dx*t,cy=a[1]+dy*t,d=Math.hypot(mx-cx,my-cy);
+    if(!best||d<best.d)best={d,f:(acc+l*t)/tot,side:Math.sign(dx*(my-cy)-dy*(mx-cx)),x:cx,y:cy,ang:Math.atan2(dy,dx)};
+    acc+=l;
+  }
+  return best;
+}
+function lineAt(mx,my,maxD){
+  let best=null;
+  for(const L of S.lines)for(let i=0;i<nseg(L);i++){
+    const r=nearOn(route(L,L.st[i],sb(L,i)),mx,my);
+    if(r&&r.d<maxD&&(!best||r.d<best.d))best={...r,L,i};
+  }
+  return best;
+}
+function placeOn(tr,h,old){
+  const st=h.L.st,fwd=h.side>=0,i=h.i,f=Math.max(.02,Math.min(.98,h.f));
+  const nb=sb(h.L,i);endGhost(tr);
+  tr.a=fwd?st[i]:nb;tr.b=fwd?nb:st[i];tr.t=fwd?f:1-f;tr.wait=0;tr.rm=false;
+  if(old!==h.L){if(old)old.trains.splice(old.trains.indexOf(tr),1);h.L.trains.push(tr)}
+}
+function endPv(d){
+  const h=d.hit;
+  if(d.tr){
+    d.tr.held=false;
+    if(d.moved){d.tr.rm=true;if(h){const st=h.L.st,fwd=h.side>=0,i=h.i,f=Math.max(.02,Math.min(.98,h.f));{const nb=sb(h.L,i);d.tr.mv={L:h.L,a:fwd?st[i]:nb,b:fwd?nb:st[i],t:fwd?f:1-f}}}else d.tr.mv=null}
+  }else if(h&&S.pool>0){placeOn({pax:[]},h,null);S.pool--}
+  ui();
+}
+function validMv(m){const s=m.L.st,x=s.indexOf(m.a),y=s.indexOf(m.b);return x>=0&&y>=0&&adjIdx(m.L,x,y)}
+function endGhost(tr){const G=tr.g;tr.g=null;if(G&&--G.n<=0)S.ghosts=S.ghosts.filter(x=>x!==G)}
+function dseg(px,py,a,b){const dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy;let t=l?((px-a[0])*dx+(py-a[1])*dy)/l:0;t=Math.max(0,Math.min(1,t));return Math.hypot(px-a[0]-t*dx,py-a[1]-t*dy)}
+function segAt(mx,my){
+  let best=null,bd=11;
+  for(const L of S.lines)for(let i=0;i<nseg(L);i++){
+    const p=route(L,L.st[i],sb(L,i));
+    for(let k=0;k<p.length-1;k++){const d=dseg(mx,my,p[k],p[k+1]);if(d<bd){bd=d;best={L,i}}}
+  }
+  return best;
+}
+function insertSeg(h,X){
+  const L=h.L,i=h.i,a=L.st[i],b=sb(L,i);
+  if(L.st.includes(X))return;
+  {const ns=L.st.slice();ns.splice(i+1,0,X);if(!canChange(L,ns,L.loop))return}
+  L.st.splice(i+1,0,X);
+  const G={L,a,b,n:0};
+  for(const tr of L.trains){
+    if(!((tr.a===a&&tr.b===b)||(tr.a===b&&tr.b===a))||tr.g)continue;
+    if(tr.t>0){tr.g=G;G.n++}else tr.b=X;
+  }
+  if(G.n>0)S.ghosts.push(G);
+}
+// řeka a tunely
+const RW=44;
+let RIVERS=[];
+function riverPts(){return RIVERS.map(r=>r.map(p=>[p[0]*W,p[1]*H]))}
+function inWater(x,y,rp){for(const pl of rp)for(let k=0;k<pl.length-1;k++)if(dseg(x,y,pl[k],pl[k+1])<RW/2)return true;return false}
+function nearWater(x,y){const rp=riverPts();for(const pl of rp)for(let k=0;k<pl.length-1;k++)if(dseg(x,y,pl[k],pl[k+1])<RW/2+28)return true;return false}
+function crossings(p){
+  const rp=riverPts();let n=0,prev=false;
+  for(let k=0;k<p.length-1;k++){
+    const a=p[k],b=p[k+1],l=Math.hypot(b[0]-a[0],b[1]-a[1]),m=Math.max(1,Math.ceil(l/4));
+    for(let s=0;s<=m;s++){const w=inWater(a[0]+(b[0]-a[0])*s/m,a[1]+(b[1]-a[1])*s/m,rp);if(w&&!prev)n++;prev=w}
+  }
+  return n>0?1:0; // jeden tunel na úsek mezi dvěma stanicemi, bez ohledu na počet přejezdů vody
+}
+function tunnelsUsed(ov,tmp){
+  let u=0;
+  for(const l0 of S.lines){const l=l0===ov?tmp:l0;for(let i=0;i<nseg(l);i++)u+=crossings(route(l,l.st[i],sb(l,i),true))}
+  return u;
+}
+function canChange(L,st,loop){
+  const cur=tunnelsUsed(),nu=tunnelsUsed(L,{i:L.i,st,loop});
+  if(nu<=S.tunnels||nu<=cur)return true;
+  msg(tr_('needT',nu-S.tunnels));return false;
+}
+function remReady(){return !!drag&&drag.remId>=0&&drag.hover!==drag.remId}
+// odebrání stanice z linky
+function removeSt(L,X){
+  const n=L.st.length,i=L.st.indexOf(X);if(i<0)return;
+  if(n<=2){
+    for(const tr of L.trains){
+      if(tr.t>0||tr.held){tr.rm=true;tr.mv=null}
+      else{const s=S.stations[tr.a];if(s)for(const p of tr.pax){if(p.shape===s.shape)S.score++;else s.pax.push(p)}tr.pax=[];endGhost(tr);tr.dead=true;S.pool++}
+    }
+    L.trains=L.trains.filter(t=>!t.dead);
+    if(L.trains.length)L.dying=true;
+    else{L.st=[];L.loop=false;S.ghosts=S.ghosts.filter(g=>g.L!==L)}
+    return;
+  }
+  {const ns0=L.st.filter(s=>s!==X);if(!canChange(L,ns0,L.loop&&ns0.length>=3))return}
+  const end=!L.loop&&(i===0||i===n-1);
+  const P=L.st[(i-1+n)%n],Q=L.st[(i+1)%n];
+  const path=end?[i===0?L.st[1]:L.st[n-2],X]:[P,X,Q];
+  const G={L,x:X,path,n:0};
+  for(const tr of L.trains){
+    if(tr.a!==X&&tr.b!==X)continue;
+    if(tr.g)endGhost(tr);
+    tr.g=G;G.n++;
+  }
+  L.st.splice(i,1);
+  if(L.loop&&L.st.length<3)L.loop=false;
+  if(G.n>0)S.ghosts.push(G);
+}
+// vlak jedoucí po staré trase kolem odebrané stanice
+function moveGR(L,tr,dt){
+  const G=tr.g,st=L.st;
+  if(tr.wait>0){tr.wait-=dt;return}
+  advance(tr,L,dt);
+  if(tr.t<1)return;
+  const B=tr.b,sB=S.stations[B];
+  if(tr.rm){for(const p of tr.pax){if(p.shape===sB.shape)S.score++;else sB.pax.push(p)}tr.pax=[];endGhost(tr);tr.dead=true;const m=tr.mv;if(m&&validMv(m))m.L.trains.push({a:m.a,b:m.b,t:m.t,wait:0,pax:[]});else S.pool++;ui();return}
+  if(B===G.x){
+    const nxt=G.path.length===3?(tr.a===G.path[0]?G.path[2]:G.path[0]):tr.a;
+    stop(tr,sB,nxt);
+    tr.a=B;tr.b=nxt;tr.t=0;tr.v=0;tr.wait=.3;return;
+  }
+  const n=st.length,ib=st.indexOf(B);let nx;
+  if(G.path.length===3){
+    const prev=B===G.path[0]?G.path[2]:G.path[0],ia=st.indexOf(prev);
+    if(L.loop){const d=(ib-ia+n)%n,dir=d===1?1:-1;nx=st[(ib+dir+n)%n]}
+    else{const dr=Math.sign(ib-ia);nx=st[ib+dr]!==undefined?st[ib+dr]:st[ib-dr]}
+  }else nx=ib===0?st[1]:st[n-2];
+  stop(tr,sB,nx);
+  endGhost(tr);tr.a=B;tr.b=nx;tr.t=0;tr.v=0;tr.wait=.8;
 }
 function nextHop(f,sh){
   const first=new Map([[f,null]]),q=[f];
@@ -59,7 +259,7 @@ function spawnPax(){
 }
 function stop(tr,s,n){
   for(const p of [...tr.pax]){
-    if(p.shape===s.shape){tr.pax.splice(tr.pax.indexOf(p),1);S.score++;continue}
+    if(p.shape===s.shape){tr.pax.splice(tr.pax.indexOf(p),1);S.score++;if(p.lx!==undefined){const sp=pos(s);S.fx.push({shape:p.shape,x:p.lx,y:p.ly,tx:sp[0],ty:sp[1],r:p.pr||0,t:0})}continue}
     const h=nextHop(S.stations.indexOf(s),p.shape);
     if(h!==null&&h!==n){tr.pax.splice(tr.pax.indexOf(p),1);s.pax.push(p)}
   }
@@ -69,26 +269,36 @@ function stop(tr,s,n){
   }
 }
 function move(L,tr,dt){
-  const st=L.st;if(st.length<2)return;
+  if(tr.held)return;
+  if(tr.g&&tr.g.path){moveGR(L,tr,dt);return}
+  const st=L.st;if(st.length<2){if(tr.g)endGhost(tr);return}
   const ia=st.indexOf(tr.a),ib=st.indexOf(tr.b);
-  if(ia<0||ib<0||Math.abs(ia-ib)!==1){tr.a=st[0];tr.b=st[1];tr.t=0;tr.wait=0;return}
+  if(ia<0||ib<0||(!tr.g&&!adjIdx(L,ia,ib))){endGhost(tr);tr.a=st[0];tr.b=st[1];tr.t=0;tr.wait=0;return}
   if(tr.wait>0){tr.wait-=dt;return}
-  tr.t+=SPEED*dt/(plen(route(L,tr.a,tr.b))||1);
+  advance(tr,L,dt);
   if(tr.t>=1){
-    const nx=st[ib+(ib-ia)]!==undefined?st[ib+(ib-ia)]:st[ia];
+    let nx;
+    if(L.loop){const n=st.length,d=(ib-ia+n)%n,dir=tr.g?(d<=n-d?1:-1):(d===1?1:-1);nx=st[(ib+dir+n)%n]}
+    else{const dr=Math.sign(ib-ia);nx=st[ib+dr]!==undefined?st[ib+dr]:st[ib-dr]}
+    if(tr.rm){const s=S.stations[tr.b];for(const p of tr.pax){if(p.shape===s.shape)S.score++;else s.pax.push(p)}tr.pax=[];endGhost(tr);tr.dead=true;const m=tr.mv;if(m&&validMv(m))m.L.trains.push({a:m.a,b:m.b,t:m.t,wait:0,pax:[]});else S.pool++;ui();return}
     stop(tr,S.stations[tr.b],nx);
-    tr.a=tr.b;tr.b=nx;tr.t=0;tr.wait=.8;
+    endGhost(tr);tr.a=tr.b;tr.b=nx;tr.t=0;tr.v=0;tr.wait=.8;
   }
 }
 function update(dt){
   S.t+=dt;
+  const wkNow=Math.floor(S.t/168);
+  if(wkNow>S.weeksDone){S.weeksDone=wkNow;S.reward=true;S.pool++;ui();document.getElementById('rwb').children[2].style.display=S.lines.length>=MAXL?'none':'';document.getElementById('rw').style.display='flex';return}
   if((S.spawnP-=dt)<=0){S.spawnP=Math.max(1.2,2.6-S.t/150);spawnPax()}
-  if((S.spawnS-=dt)<=0){S.spawnS=20;if(S.stations.length<MAXS){addStation();msg('Nová stanice!')}}
-  if((S.poolT+=dt)>=30){S.poolT=0;S.pool++;ui();msg('Máš nový vlak k nasazení.')}
-  for(const L of S.lines)for(const tr of L.trains)move(L,tr,dt);
+  if((S.spawnS-=dt)<=0){S.spawnS=20;if(S.stations.length<MAXS){addStation();msg(tr_('newSt'))}}
+  for(const L of S.lines){
+    for(const tr of L.trains)move(L,tr,dt);
+    if(L.trains.some(t=>t.dead))L.trains=L.trains.filter(t=>!t.dead);
+    if(L.dying&&!L.trains.length){L.st=[];L.loop=false;L.dying=false;S.ghosts=S.ghosts.filter(g=>g.L!==L);buildAdj();ui()}
+  }
   for(const s of S.stations){
     if(s.pax.length>=8)s.over+=dt;else s.over=Math.max(0,s.over-dt*2);
-    if(s.over>14&&!S.over){S.over=true;document.getElementById('ot').innerHTML='Konec hry<br>Přepravených cestujících: '+S.score;document.getElementById('over').style.display='flex'}
+    if(s.over>14&&!S.over){S.over=true;document.getElementById('ot').innerHTML=tr_('over',S.score);document.getElementById('over').style.display='flex'}
   }
 }
 function poly(n,a0,x,y,r){ctx.beginPath();for(let i=0;i<n;i++){const a=a0+i*2*Math.PI/n;ctx[i?'lineTo':'moveTo'](x+Math.cos(a)*r,y+Math.sin(a)*r)}ctx.closePath()}
@@ -99,16 +309,256 @@ function shp(sh,x,y,r){
   else poly(4,-Math.PI/2,x,y,r*1.25);
 }
 function offs(L,a,b){
-  const lo=Math.min(a,b),hi=Math.max(a,b),[x1,y1]=pos(S.stations[lo]),[x2,y2]=pos(S.stations[hi]),d=Math.hypot(x2-x1,y2-y1)||1,k=(L.i-1)*8;
+  const lo=Math.min(a,b),hi=Math.max(a,b),[x1,y1]=pos(S.stations[lo]),[x2,y2]=pos(S.stations[hi]),d=Math.hypot(x2-x1,y2-y1)||1,k=((L.i%3)-1)*8;
   return [-(y2-y1)/d*k,(x2-x1)/d*k];
 }
 // trasa jen vodorovně/svisle a pod 45°: nejdřív rovný úsek, pak diagonála
-function route(L,a,b){
-  const lo=Math.min(a,b),hi=Math.max(a,b),P=pos(S.stations[lo]),Q=pos(S.stations[hi]);
-  const dx=Q[0]-P[0],dy=Q[1]-P[1],adx=Math.abs(dx),ady=Math.abs(dy),sx=Math.sign(dx),sy=Math.sign(dy);
-  const M=adx>=ady?[P[0]+sx*(adx-ady),P[1]]:[P[0],P[1]+sy*(ady-adx)];
-  const [ox,oy]=offs(L,a,b),pts=[P,M,Q].map(p=>[p[0]+ox,p[1]+oy]);
-  return a<b?pts:pts.reverse();
+// v=0: rovný úsek u nižší stanice, pak diagonála; v=1: nejdřív diagonála, pak rovný úsek
+function geom(lo,hi,v){
+  const P=pos(S.stations[lo]),Q=pos(S.stations[hi]),dx=Q[0]-P[0],dy=Q[1]-P[1],adx=Math.abs(dx),ady=Math.abs(dy),sx=Math.sign(dx),sy=Math.sign(dy),dg=Math.min(adx,ady);
+  const M=v?[P[0]+sx*dg,P[1]+sy*dg]:(adx>=ady?[P[0]+sx*(adx-ady),P[1]]:[P[0],P[1]+sy*(ady-adx)]);
+  return [P,M,Q];
+}
+const sg=v=>Math.abs(v)<.5?0:Math.sign(v);
+// směr (jednotkový vektor), kterým úsek vychází ze stanice (u nižší stanice atLo, jinak u vyšší)
+function leaveVec(g,atLo){
+  const [P,M,Q]=g,e=atLo?P:Q,o=atLo?Q:P;
+  let x=sg(M[0]-e[0]),y=sg(M[1]-e[1]);
+  if(!x&&!y){x=sg(o[0]-e[0]);y=sg(o[1]-e[1])}
+  const n=Math.hypot(x,y)||1;return [x/n,y/n];
+}
+// cena zlomu mezi dvěma úseky téže linky ve společné stanici: čím ostřejší zlom, tím vyšší; překrytí je nejhorší
+function pairCost(L,j,cj,k,ck){
+  const xj=L.st[j],yj=sb(L,j),xk=L.st[k],yk=sb(L,k),lj=Math.min(xj,yj),lk=Math.min(xk,yk);
+  const gj=geom(lj,Math.max(xj,yj),cj),gk=geom(lk,Math.max(xk,yk),ck);
+  let t=0;
+  for(const s of [xj,yj])if(s===xk||s===yk){
+    const a=leaveVec(gj,s===lj),b=leaveVec(gk,s===lk),d=a[0]*b[0]+a[1]*b[1];
+    t+=d+(d>.99?10:0);
+  }
+  return t;
+}
+// vybere pro celou linku varianty úseků s nejmenším součtem zlomů (dynamické programování, u smyčky i s uzavřením)
+function solveVariants(L){
+  const ns=nseg(L),INF=1e9;
+  const run=fixed=>{
+    const best=[],from=[];
+    best[0]=fixed===null?[0,0]:(fixed===0?[0,INF]:[INF,0]);
+    for(let j=1;j<ns;j++){
+      best[j]=[INF,INF];from[j]=[0,0];
+      for(let c=0;c<2;c++)for(let p=0;p<2;p++){
+        const v=best[j-1][p]+pairCost(L,j-1,p,j,c);
+        if(v<best[j][c]-1e-9){best[j][c]=v;from[j][c]=p}
+      }
+    }
+    return {best,from};
+  };
+  const back=(r,end)=>{const v=[];let c=end;for(let j=ns-1;j>=0;j--){v[j]=c;if(j>0)c=r.from[j][c]}return v};
+  if(!L.loop||ns<3){
+    const r=run(null);
+    return back(r,r.best[ns-1][1]<r.best[ns-1][0]-1e-9?1:0);
+  }
+  let bestTot=INF,bestV=null;
+  for(const s0 of [0,1]){
+    const r=run(s0);
+    for(let c=0;c<2;c++){
+      const tot=r.best[ns-1][c]+pairCost(L,ns-1,c,0,s0);
+      if(tot<bestTot-1e-9){bestTot=tot;bestV=back(r,c)}
+    }
+  }
+  return bestV||new Array(ns).fill(0);
+}
+function variant(L,a,b){
+  const ns=nseg(L);if(ns<2)return 0;
+  let idx=-1;
+  for(let i=0;i<ns;i++){const x=L.st[i],y=sb(L,i);if((x===a&&y===b)||(x===b&&y===a)){idx=i;break}}
+  if(idx<0)return 0;
+  const key=L.st.join(',')+'|'+(L.loop?1:0)+'|'+W+'x'+H;
+  if(L._vk!==key){L._vk=key;L._vv=solveVariants(L)}
+  return L._vv[idx];
+}
+// --- rozložení linek: sdílené úseky se rozdělí do souběžných pruhů ---
+const SP=9;
+let LAY={sig:'',m:new Map()};
+function buildLayout(){
+  const legs=[];
+  for(const L of S.lines)for(let i=0;i<nseg(L);i++){
+    const A=L.st[i],B=sb(L,i),lo=Math.min(A,B),hi=Math.max(A,B),[P,M,Q]=geom(lo,hi,variant(L,A,B)),key=L.i+':'+lo+'-'+hi;
+    [[P,M,1],[M,Q,2]].forEach(([s,e,idx])=>{
+      const dx=e[0]-s[0],dy=e[1]-s[1],l=Math.hypot(dx,dy);if(l<.5)return;
+      let ux=dx/l,uy=dy/l;if(ux<-1e-6||(Math.abs(ux)<1e-6&&uy<0)){ux=-ux;uy=-uy}
+      const k=Math.round(Math.atan2(uy,ux)/(Math.PI/4)),nx=-uy,ny=ux,ta=s[0]*ux+s[1]*uy,tb=e[0]*ux+e[1]*uy;
+      const lo2=ta<=tb;
+      legs.push({L:L.i,key,idx,k,nx,ny,c:s[0]*nx+s[1]*ny,t0:Math.min(ta,tb),t1:Math.max(ta,tb),e0:lo2?s:e,e1:lo2?e:s});
+    });
+  }
+  const par=legs.map((_,i)=>i),find=x=>par[x]===x?x:(par[x]=find(par[x]));
+  for(let i=0;i<legs.length;i++)for(let j=i+1;j<legs.length;j++){
+    const a=legs[i],b=legs[j];
+    if(a.k!==b.k||Math.abs(a.c-b.c)>14)continue;
+    if(Math.min(a.t1,b.t1)-Math.max(a.t0,b.t0)>2)par[find(i)]=find(j);
+  }
+  const groups=new Map();
+  legs.forEach((lg,i)=>{const r=find(i);if(!groups.has(r))groups.set(r,[]);groups.get(r).push(lg)});
+  const m=new Map();
+  const side=(lg,e)=>{
+    let sg=0;
+    for(const o of legs){
+      if(o===lg||o.L!==lg.L||o.k===lg.k)continue;
+      for(const [p,q] of [[o.e0,o.e1],[o.e1,o.e0]])
+        if(Math.hypot(p[0]-e[0],p[1]-e[1])<1.5){const d=(q[0]-e[0])*lg.nx+(q[1]-e[1])*lg.ny;sg+=Math.sign(Math.abs(d)<1?0:d)}
+    }
+    return Math.sign(sg);
+  };
+  const G=[...groups.values()].map(grp=>{
+    const sc=new Map();
+    for(const lg of grp){const v=side(lg,lg.e0)+side(lg,lg.e1),o=sc.get(lg.L)||[0,0];sc.set(lg.L,[o[0]+v,o[1]+1])}
+    const avg=new Map([...sc].map(([k,v])=>[k,v[0]/v[1]]));
+    const lines=[...avg.keys()];
+    return {grp,avg,lines,lane:null,ties:new Set(lines.map(l=>avg.get(l))).size<lines.length};
+  });
+  const near=(p,q)=>Math.hypot(p[0]-q[0],p[1]-q[1])<1.5;
+  // předpoklad pořadí A před B podle už rozhodnutých sousedních skupin (pokračování přes stanici)
+  const pref=(g,A,B)=>{
+    let sum=0;
+    for(const la of g.grp){
+      if(la.L!==A)continue;
+      for(const [X,ts1] of [[la.e1,1],[la.e0,-1]]){
+        for(const g2 of G){
+          if(g2===g||!g2.lane)continue;
+          for(const a2 of g2.grp){
+            if(a2.L!==A)continue;
+            const ts2=near(a2.e0,X)?1:near(a2.e1,X)?-1:0;if(!ts2)continue;
+            for(const b2 of g2.grp){
+              if(b2.L!==B)continue;
+              const tb=near(b2.e0,X)?1:near(b2.e1,X)?-1:0;if(tb!==ts2)continue;
+              sum+=ts1*ts2*Math.sign(g2.lane.get(B)-g2.lane.get(A));
+            }
+          }
+        }
+      }
+    }
+    return sum;
+  };
+  const order=g=>{
+    g.lines.sort((a,b)=>{const d=g.avg.get(a)-g.avg.get(b);if(d)return d;const p=pref(g,a,b);return p?-p:a-b});
+    g.lane=new Map(g.lines.map((l,i)=>[l,i-(g.lines.length-1)/2]));
+  };
+  G.filter(g=>!g.ties).forEach(order);
+  let todo=G.filter(g=>!g.lane);
+  while(todo.length){
+    // nejdřív skupiny, které už mají rozhodnutého souseda
+    const pick=todo.find(g=>g.lines.some(a=>g.lines.some(b=>a<b&&pref(g,a,b)!==0)))||todo[0];
+    order(pick);todo=todo.filter(g=>!g.lane);
+  }
+  for(const g of G)for(const lg of g.grp){
+    const n=g.lines.length;
+    if(g.cbar===undefined)g.cbar=g.grp.reduce((a,x)=>a+x.c,0)/g.grp.length;
+    const off=n>1?g.cbar+g.lane.get(lg.L)*SP-lg.c:0;
+    if(!m.has(lg.key))m.set(lg.key,[[0,0],[0,0]]);
+    m.get(lg.key)[lg.idx-1]=[lg.nx*off,lg.ny*off];
+  }
+  return m;
+}
+function layoutOf(key){
+  const sig=S.lines.map(l=>l.st.join(',')+(l.loop?'L':'')+(l.dying?'D':'')).join('|')+W+'x'+H;
+  if(LAY.sig!==sig){LAY.sig=sig;LAY.m=buildLayout()}
+  return LAY.m.get(key)||null;
+}
+// trasa úseku a→b: rovné/šikmé kusy posunuté do svého pruhu, u stanic se pruhy sbíhají do středu
+function segLegs(L,a,b,useLay){
+  const lo=Math.min(a,b),hi=Math.max(a,b),[P,M,Q]=geom(lo,hi,variant(L,a,b));
+  const lay=(useLay&&S.lines[L.i]===L&&!L.dying)?layoutOf(L.i+':'+lo+'-'+hi):null;
+  const o1=lay?lay[0]:[0,0],o2=lay?lay[1]:[0,0];
+  const legs=[],l1=Math.hypot(M[0]-P[0],M[1]-P[1]),l2=Math.hypot(Q[0]-M[0],Q[1]-M[1]);
+  if(l1>.5)legs.push({l:l1,u:[(M[0]-P[0])/l1,(M[1]-P[1])/l1],o:o1});
+  if(l2>.5)legs.push({l:l2,u:[(Q[0]-M[0])/l2,(Q[1]-M[1])/l2],o:o2});
+  if(!legs.length)legs.push({l:0,u:[1,0],o:[0,0]});
+  return {lo,hi,P,M,Q,o1,o2,legs,lay};
+}
+// konec úseku u stanice X: pokud se linka ve stanici lomí, napojí se v průsečíku posunutých os obou úseků
+function joinPt(L,idx,X,pos,leg,atLo){
+  const base=[pos[0]+leg.o[0],pos[1]+leg.o[1]];
+  const ns=nseg(L);
+  for(let j=0;j<ns;j++){
+    if(j===idx)continue;
+    const A=L.st[j],B=sb(L,j);if(A!==X&&B!==X)continue;
+    const n=segLegs(L,A,B,true),nl=X===n.lo?n.legs[0]:n.legs[n.legs.length-1];
+    const u=leg.u,v=nl.u,cr=u[0]*v[1]-u[1]*v[0];
+    if(Math.abs(cr)<.25)return base;
+    const dx=nl.o[0]-leg.o[0],dy=nl.o[1]-leg.o[1],t=(dx*v[1]-v[0]*dy)/cr;
+    if(Math.abs(t)>22)return base;
+    return [base[0]-leg.o[0]+leg.o[0]+u[0]*t,base[1]+u[1]*t];
+  }
+  return base;
+}
+// trasa úseku a→b: rovné/šikmé kusy posunuté do svého pruhu
+function route(L,a,b,noLay){
+  const {lo,hi,P,M,Q,o1,o2,legs,lay}=segLegs(L,a,b,!noLay);
+  const f=legs[0],g=legs[legs.length-1];
+  let idx=-1;
+  if(lay){const ns=nseg(L);for(let i=0;i<ns;i++){const x=L.st[i],y=sb(L,i);if((x===lo&&y===hi)||(x===hi&&y===lo)){idx=i;break}}}
+  const p0=lay&&idx>=0?joinPt(L,idx,lo,P,f,true):[P[0]+f.o[0],P[1]+f.o[1]];
+  const p1=lay&&idx>=0?joinPt(L,idx,hi,Q,g,false):[Q[0]+g.o[0],Q[1]+g.o[1]];
+  const pts=[p0];
+  if(legs.length===2){
+    const u1=legs[0].u,u2=legs[1].u,dx=o2[0]-o1[0],dy=o2[1]-o1[1],cr=u1[0]*u2[1]-u1[1]*u2[0];
+    if(Math.abs(cr)<.25)pts.push([M[0]+(o1[0]+o2[0])/2,M[1]+(o1[1]+o2[1])/2]);
+    else{const s=(dx*u2[1]-u2[0]*dy)/cr;pts.push([M[0]+o1[0]+s*u1[0],M[1]+o1[1]+s*u1[1]])}
+  }
+  pts.push(p1);
+  const out=sm(pts);
+  out.d0=f.u;out.d1=[-g.u[0],-g.u[1]];
+  if(a>b){out.reverse();const t=out.d0;out.d0=out.d1;out.d1=t}
+  return out;
+}
+// --- plynulé animace ---
+const wrapAng=a=>Math.atan2(Math.sin(a),Math.cos(a));
+// zaoblení zlomů trasy
+function sm(p){
+  if(p.length<3)return p;
+  const out=[p[0]];
+  for(let i=1;i<p.length-1;i++){
+    const a=p[i-1],m=p[i],b=p[i+1],l1=Math.hypot(m[0]-a[0],m[1]-a[1]),l2=Math.hypot(b[0]-m[0],b[1]-m[1]);
+    if(l1<1||l2<1){out.push(m);continue}
+    const u1=[(m[0]-a[0])/l1,(m[1]-a[1])/l1],u2=[(b[0]-m[0])/l2,(b[1]-m[1])/l2];
+    if(Math.abs(u1[0]*u2[1]-u1[1]*u2[0])<1e-3){out.push(m);continue}
+    const r=Math.min(11,l1/3,l2/3),A=[m[0]-u1[0]*r,m[1]-u1[1]*r],B=[m[0]+u2[0]*r,m[1]+u2[1]*r];
+    for(let k=0;k<=6;k++){const t=k/6,q=1-t;out.push([q*q*A[0]+2*q*t*m[0]+t*t*B[0],q*q*A[1]+2*q*t*m[1]+t*t*B[1]])}
+  }
+  out.push(p[p.length-1]);return out;
+}
+// rozjezd a brzdění vlaku
+function advance(tr,L,dt){
+  const D=plen(route(L,tr.a,tr.b))||1,rem=Math.max(0,D-tr.t*D);
+  const cap=Math.min(VMAX,Math.sqrt(2*ACC*rem)+VMIN);
+  tr.v=Math.max(VMIN,Math.min(cap,(tr.v||0)+ACC*dt));
+  tr.t+=tr.v*dt/D;
+}
+// postupné vykreslování a mizení úseků linek
+const segAnim=new Map();
+function strokePart(p,f,rev){
+  if(f>=1){ctx.beginPath();ctx.moveTo(p[0][0],p[0][1]);for(const q of p.slice(1))ctx.lineTo(q[0],q[1]);ctx.stroke();return}
+  const q=rev?p.slice().reverse():p;let r=plen(q)*f;
+  ctx.beginPath();ctx.moveTo(q[0][0],q[0][1]);
+  for(let i=0;i<q.length-1;i++){
+    const dx=q[i+1][0]-q[i][0],dy=q[i+1][1]-q[i][1],l=Math.hypot(dx,dy);
+    if(r>=l){ctx.lineTo(q[i+1][0],q[i+1][1]);r-=l}else{ctx.lineTo(q[i][0]+dx*r/l,q[i][1]+dy*r/l);break}
+  }
+  ctx.stroke();
+}
+// cestující: plynulý přesun mezi stanicí a vagonem, objevení se zvětšením
+function paxDraw(p,car,k,lx,ly,cx,cy,rot,r,col){
+  const c=Math.cos(rot),s=Math.sin(rot),tx=cx+lx*c-ly*s,ty=cy+lx*s+ly*c;
+  if(p.car!==car||p.sk!==k){
+    if(p.lx===undefined){p.ox=0;p.oy=0;p.sc=0;p.pr=rot}
+    else{p.ox=p.lx-tx;p.oy=p.ly-ty}
+    p.car=car;p.sk=k;
+  }
+  const dec=Math.exp(-FDT*11);
+  p.ox*=dec;p.oy*=dec;p.pr+=wrapAng(rot-p.pr)*(1-dec);p.sc=Math.min(1,p.sc+FDT*5);
+  const x=tx+p.ox,y=ty+p.oy;p.lx=x;p.ly=y;
+  ctx.save();ctx.translate(x,y);ctx.rotate(p.pr);ctx.fillStyle=col;shp(p.shape,0,0,r*p.sc);ctx.fill();ctx.restore();
 }
 function plen(p){let s=0;for(let i=0;i<p.length-1;i++)s+=Math.hypot(p[i+1][0]-p[i][0],p[i+1][1]-p[i][1]);return s}
 function at(p,t){
@@ -123,41 +573,188 @@ function at(p,t){
 }
 function draw(){
   const cs=getComputedStyle(document.documentElement),fg=cs.getPropertyValue('--fg').trim(),stc=cs.getPropertyValue('--st').trim();
-  ctx.clearRect(0,0,W,H);ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
+  ctx.setTransform(DPR*cam.z,0,0,DPR*cam.z,DPR*cam.x,DPR*cam.y);
+  ctx.lineCap='round';ctx.lineJoin='round';
+  const wc=cs.getPropertyValue('--water').trim();
+  {const rp=riverPts();ctx.strokeStyle=wc;ctx.lineWidth=RW;ctx.lineCap='butt';ctx.lineJoin='round';for(const pl of rp){ctx.beginPath();ctx.moveTo(pl[0][0],pl[0][1]);for(const q of pl.slice(1))ctx.lineTo(q[0],q[1]);ctx.stroke()}ctx.lineCap='round'}
+  const gh=[];
+  for(const g of S.ghosts){const pa=g.path||[g.a,g.b];for(let k=0;k<pa.length-1;k++)gh.push([g.L,pa[k],pa[k+1]])}
+  for(const L of S.lines)if(L.dying&&L.st.length>=2)gh.push([L,L.st[0],L.st[1]]);
+  for(const [gL,ga,gb] of gh){const p=route(gL,ga,gb);ctx.strokeStyle=gL.c;ctx.globalAlpha=.3;ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(p[0][0],p[0][1]);for(const q of p.slice(1))ctx.lineTo(q[0],q[1]);ctx.stroke()}
+  const seen=new Set();
   for(const L of S.lines){
-    ctx.strokeStyle=L.c;ctx.lineWidth=7;ctx.globalAlpha=L.i===S.sel?1:.8;
-    for(let i=0;i<L.st.length-1;i++){
-      const p=route(L,L.st[i],L.st[i+1]);
-      ctx.beginPath();ctx.moveTo(p[0][0],p[0][1]);for(const q of p.slice(1))ctx.lineTo(q[0],q[1]);ctx.stroke();
+    ctx.strokeStyle=L.c;ctx.lineWidth=7;
+    const base=L.i===S.sel?1:.8;
+    for(let i=0;i<nseg(L);i++){
+      const A=L.st[i],B=sb(L,i),p=route(L,A,B),key=L.i+':'+Math.min(A,B)+'-'+Math.max(A,B);
+      let e=segAnim.get(key);
+      if(!e){e={p:0,a:1,rev:i===0&&nseg(L)>1&&!L.loop};segAnim.set(key,e)}
+      e.pts=p;e.col=L.c;e.base=base;e.a=1;e.p=Math.min(1,e.p+FDT*4.5);seen.add(key);
+      ctx.globalAlpha=base;strokePart(e.pts,e.p,e.rev);
     }
   }
+  for(const [k,e] of segAnim){
+    if(seen.has(k))continue;
+    e.a-=FDT*4;
+    if(e.a<=0){segAnim.delete(k);continue}
+    ctx.strokeStyle=e.col;ctx.lineWidth=7;ctx.globalAlpha=e.base*e.a;strokePart(e.pts,1,false);
+  }
   ctx.globalAlpha=1;
+  // tunely: část linky pod vodou je vyduté
+  {
+    const rp=riverPts();ctx.strokeStyle=wc;ctx.lineWidth=3;ctx.lineCap='butt';
+    for(const L of S.lines)for(let i=0;i<nseg(L);i++){
+      const p=route(L,L.st[i],sb(L,i));let run=false;
+      for(let k=0;k<p.length-1;k++){
+        const a=p[k],b=p[k+1],l=Math.hypot(b[0]-a[0],b[1]-a[1]),m=Math.max(1,Math.ceil(l/4));
+        for(let s=0;s<=m;s++){
+          const x=a[0]+(b[0]-a[0])*s/m,y=a[1]+(b[1]-a[1])*s/m;
+          if(inWater(x,y,rp)){if(!run){ctx.beginPath();ctx.moveTo(x,y);run=true}else ctx.lineTo(x,y)}
+          else if(run){ctx.stroke();run=false}
+        }
+      }
+      if(run)ctx.stroke();
+    }
+    ctx.lineCap='round';
+  }
+  // koncové čárky linek
+  for(const L of S.lines){
+    const n=L.st.length;if(n<2||L.loop||L.dying)continue;
+    ctx.strokeStyle=L.c;ctx.lineCap='butt';
+    [[route(L,L.st[0],L.st[1]),0],[route(L,L.st[n-2],L.st[n-1]),1]].forEach(([p,end])=>{
+      const e=end?p[p.length-1]:p[0],dv=end?p.d1:p.d0;
+      if(!dv)return;
+      const ux=-dv[0],uy=-dv[1],bx=e[0]+ux*(R+9),by=e[1]+uy*(R+9);
+      ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(e[0],e[1]);ctx.lineTo(bx,by);ctx.stroke();
+      ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(bx-uy*11,by+ux*11);ctx.lineTo(bx+uy*11,by-ux*11);ctx.stroke();
+    });
+    ctx.lineCap='round';
+  }
+  // náhled linky při tažení
+  if(drag&&drag.seg&&!remReady()){
+    const {L,i}=drag.seg,a=pos(S.stations[L.st[i]]),b=pos(S.stations[sb(L,i)]),X=drag.hover>=0?pos(S.stations[drag.hover]):[drag.x,drag.y];
+    const o=(A,B)=>{const dx=B[0]-A[0],dy=B[1]-A[1],adx=Math.abs(dx),ady=Math.abs(dy);return adx>=ady?[A[0]+Math.sign(dx)*(adx-ady),A[1]]:[A[0],A[1]+Math.sign(dy)*(ady-adx)]};
+    ctx.strokeStyle=L.c;ctx.globalAlpha=.55;ctx.lineWidth=7;ctx.beginPath();
+    [[a,X],[X,b]].forEach(([A,B])=>{const pp=sm([A,o(A,B),B]);ctx.moveTo(pp[0][0],pp[0][1]);for(const q of pp.slice(1))ctx.lineTo(q[0],q[1])});
+    ctx.stroke();ctx.globalAlpha=1;
+  }
+  if(drag&&drag.from>=0&&!drag.loopOpen&&!remReady()){
+    const L=S.lines[S.sel],P=pos(S.stations[drag.from]),Q=drag.hover>=0?pos(S.stations[drag.hover]):[drag.x,drag.y];
+    const [A,B]=drag.hover>=0&&drag.hover<drag.from?[Q,P]:[P,Q];
+    const dx=B[0]-A[0],dy=B[1]-A[1],adx=Math.abs(dx),ady=Math.abs(dy);
+    const M=adx>=ady?[A[0]+Math.sign(dx)*(adx-ady),A[1]]:[A[0],A[1]+Math.sign(dy)*(ady-adx)];
+    ctx.strokeStyle=L.c;ctx.globalAlpha=.55;ctx.lineWidth=7;{const pp=sm([A,M,B]);ctx.beginPath();ctx.moveTo(pp[0][0],pp[0][1]);for(const q of pp.slice(1))ctx.lineTo(q[0],q[1]);ctx.stroke()}ctx.globalAlpha=1;
+  }
+  drawTrains(fg);
   S.stations.forEach((s,id)=>{
     const [x,y]=pos(s);
     const sl=S.lines[S.sel];
-    if(sl.st[sl.st.length-1]===id){ctx.strokeStyle=sl.c;ctx.lineWidth=3;ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(x,y,R+9,0,7);ctx.stroke();ctx.setLineDash([])}
+    // plynule se objevující a mizející podbarvení stanice
+    let hc=null;
+    if(remReady()&&drag.remId===id)hc='#8a8f98';
+    else if(drag&&(drag.from===id||drag.hover===id))hc=sl.c;
+    s.hl=(s.hl||0)+((hc?1:0)-(s.hl||0))*Math.min(1,FDT*14);
+    if(hc)s.hlc=hc;
+    if(s.hl>.02){
+      const hr=R+6+4*s.hl;
+      ctx.fillStyle=s.hlc;ctx.globalAlpha=.35*s.hl;ctx.beginPath();ctx.arc(x,y,hr,0,7);ctx.fill();
+      ctx.globalAlpha=s.hl;ctx.strokeStyle=s.hlc;ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,hr,0,7);ctx.stroke();
+      ctx.globalAlpha=1;
+    }
     if(s.over>0){ctx.strokeStyle='#e0453a';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x,y,R+5,-Math.PI/2,-Math.PI/2+Math.min(1,s.over/14)*2*Math.PI);ctx.stroke()}
     ctx.fillStyle=stc;ctx.strokeStyle=fg;ctx.lineWidth=3;shp(s.shape,x,y,R-3);ctx.fill();ctx.stroke();
-    ctx.fillStyle=fg;s.pax.slice(0,12).forEach((p,k)=>{shp(p.shape,x+R+12+(k%4)*11,y-8+Math.floor(k/4)*11,4);ctx.fill()});
+    s.pax.slice(0,12).forEach((p,k)=>paxDraw(p,s,k,R+12+(k%4)*11,-8+Math.floor(k/4)*11,x,y,0,4,fg));
   });
+  function drawTrains(fg){
   for(const L of S.lines)for(const tr of L.trains){
-    if(L.st.length<2||!S.stations[tr.a]||!S.stations[tr.b])continue;
+    if(tr.mv&&validMv(tr.mv)){const [px,py,pa]=at(route(tr.mv.L,tr.mv.a,tr.mv.b),tr.mv.t);ctx.save();ctx.globalAlpha=.35;ctx.translate(px,py);ctx.rotate(pa);ctx.fillStyle=tr.mv.L.c;ctx.strokeStyle=fg;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-17,-9,34,18,4);ctx.fill();ctx.restore()}
+    if(tr.held||L.st.length<2||!S.stations[tr.a]||!S.stations[tr.b])continue;
     const [x,y,ang]=at(route(L,tr.a,tr.b),tr.t);
+    // plynulé natáčení vagonu (při otočení o víc než ~115° se přepne hned)
+    let da=tr.da===undefined?ang:tr.da;
+    const dd=wrapAng(ang-da);
+    da=Math.abs(dd)>2?ang:da+dd*Math.min(1,FDT*14);tr.da=da;
+    ctx.save();ctx.translate(x,y);ctx.rotate(da);
+    ctx.fillStyle=(tr.rm||tr.mv)?'#8a8f98':L.c;ctx.beginPath();ctx.roundRect(-17,-9,34,18,4);ctx.fill();
+    ctx.restore();
+    tr.pax.forEach((p,k)=>paxDraw(p,tr,k,-12+(k%4)*8,-4.5+Math.floor(k/4)*9,x,y,da,3,'#fff'));
+  }
+  }
+  if(drag&&drag.pv){
+    const h=drag.hit;let x=drag.x,y=drag.y,ang=0,col='#888';
+    if(h){x=h.x;y=h.y;col=h.L.c;ang=h.side>=0?h.ang:h.ang+Math.PI}
     ctx.save();ctx.translate(x,y);ctx.rotate(ang);
-    ctx.fillStyle=L.c;ctx.strokeStyle=fg;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(-17,-9,34,18,4);ctx.fill();ctx.stroke();
-    ctx.rotate(-ang);ctx.fillStyle='#fff';
-    tr.pax.forEach((p,k)=>{shp(p.shape,-10+(k%3)*10,-5+Math.floor(k/3)*10,3.2);ctx.fill()});
+    ctx.fillStyle=col;ctx.beginPath();ctx.roundRect(-17,-9,34,18,4);ctx.fill();
+    if(h){ctx.fillStyle=fg;ctx.beginPath();ctx.moveTo(35,0);ctx.lineTo(24,-8);ctx.lineTo(24,8);ctx.closePath();ctx.fill()}
     ctx.restore();
   }
-  document.getElementById('hud').textContent='Skóre: '+S.score+' · Čas: '+Math.floor(S.t)+' s';
+  // cestující, kteří dojeli do cíle, se při vystoupení zmenší a zmizí
+  for(let i=S.fx.length-1;i>=0;i--){
+    const f=S.fx[i];f.t+=FDT*3.5;
+    if(f.t>=1){S.fx.splice(i,1);continue}
+    const e=f.t*f.t,fx=f.x+(f.tx-f.x)*e,fy=f.y+(f.ty-f.y)*e;
+    ctx.save();ctx.globalAlpha=1-f.t;ctx.fillStyle=fg;ctx.translate(fx,fy);ctx.rotate(f.r);shp(f.shape,0,0,3.5*(1-f.t*.6));ctx.fill();ctx.restore();
+  }
+  clockUI();
 }
 function loop(t){
-  const dt=Math.min(.05,(t-last)/1000||0);last=t;
-  if(!paused&&!S.over)update(dt);
+  const dt=Math.min(.05,(t-last)/1000||0);last=t;FDT=dt;
+  if(speed>0&&!S.over&&!S.reward&&!inMenu)update(dt*MULT[speed]);
   draw();requestAnimationFrame(loop);
 }
+// --- jazyky ---
+const I18N={
+  en:{title:'OpenMetro – prototype',menu:'Menu',again:'Play again',hint:'Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.',
+    wk:'Week completed!',newloc:'You received a new locomotive',choose:'Choose reward',
+    needT:n=>'Not enough tunnels – the connection crosses water ('+n+' missing).',newSt:'New station!',
+    over:sc=>'<div class="ot1">Game over</div><div class="ot2"><b>'+sc+'</b><span>Passengers delivered</span></div>',dragTrain:'Drag onto a line',noTrain:'No free trains',
+    freeT:(u,t)=>'Free tunnels ('+u+' of '+t+' used)',delLine:'Delete line',dying:'This line is closing down.',extend:'A line can only be extended from its end.',
+    spd:['Pause','Normal speed','Speed 2×','Speed 3×'],rTrain:'Train',rTunnel:'Tunnel',rLine:'New line',
+    days:['Mo','Tu','We','Th','Fr','Sa','Su'],clock:(s,w,d)=>'Passengers handled: '+s+' · Week '+w+' · Day: '+d,lang:'Language'},
+  cs:{title:'OpenMetro – prototyp',menu:'Menu',again:'Hrát znovu',hint:'Vpravo vyber linku a táhni mezi stanicemi. Vlaky táhni z levého panelu na linku.',
+    wk:'Týden dokončen!',newloc:'Získal jsi novou lokomotivu',choose:'Vyber odměnu',
+    needT:n=>'Nemáš dost tunelů – spojení vede přes vodu (chybí '+n+').',newSt:'Nová stanice!',
+    over:sc=>'<div class="ot1">Konec hry</div><div class="ot2"><b>'+sc+'</b><span>Přepravených cestujících</span></div>',dragTrain:'Přetáhni na linku',noTrain:'Žádné volné vlaky',
+    freeT:(u,t)=>'Volné tunely (použito '+u+' z '+t+')',delLine:'Smazat linku',dying:'Linka právě zaniká.',extend:'Linku lze prodloužit jen z jejího konce.',
+    spd:['Pauza','Normální rychlost','Rychlost 2×','Rychlost 3×'],rTrain:'Vlak',rTunnel:'Tunel',rLine:'Nová linka',
+    days:['Po','Út','St','Čt','Pá','So','Ne'],clock:(s,w,d)=>'Přepravení cestující: '+s+' · Týden '+w+' · Den: '+d,lang:'Jazyk'}
+};
+let LANG='en';
+try{const l=localStorage.getItem('om_lang');if(l==='cs'||l==='en')LANG=l}catch(e){}
+const tr_=(k,...a)=>{const v=I18N[LANG][k];return typeof v==='function'?v(...a):v};
 function msg(t){document.getElementById('msg').textContent=t}
+const TRAIN_SVG='<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><path d="M6 3h12a2 2 0 0 1 2 2v10a3 3 0 0 1-3 3l1.5 2h-2l-1.5-2h-6L7.5 20h-2L7 18a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2z"/><rect x="7" y="6" width="10" height="5" rx="1" fill="var(--bar)"/><circle cx="8.5" cy="14.5" r="1.3" fill="var(--bar)"/><circle cx="15.5" cy="14.5" r="1.3" fill="var(--bar)"/></svg>';
+const LINE_SVG='<svg viewBox="0 0 24 24" width="32" height="32"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M12 7v10M7 12h10" stroke="var(--bar)" stroke-width="2.6" stroke-linecap="round"/></svg>';
+const TUNNEL_SVG='<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 20V12a9 9 0 0 1 18 0v8"/><path d="M8 20v-7a4 4 0 0 1 8 0v7"/><path d="M2 20h20"/></svg>';
+const CART_SVG='<svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor"><rect x="3" y="6" width="18" height="9" rx="2"/><circle cx="8" cy="18" r="2"/><circle cx="16" cy="18" r="2"/><rect x="0.5" y="10" width="2.5" height="2"/><rect x="21" y="10" width="2.5" height="2"/></svg>';
 function ui(){
+  const lf=document.getElementById('left'),rt=document.getElementById('right');
+  lf.innerHTML='';rt.innerHTML='';
+  {
+    const d=document.createElement('div');d.className='tr'+(S.pool>0?'':' empty');d.title=S.pool>0?tr_('dragTrain'):tr_('noTrain');
+    d.innerHTML=TRAIN_SVG+'<b>'+S.pool+'</b>';
+    d.addEventListener('pointerdown',e=>{
+      if(S.over||paused||S.pool<1)return;
+      const [tx,ty]=toW(e);
+      drag={pv:true,tr:null,L:null,from:-1,hover:-1,moved:true,hit:null,x:tx,y:ty};
+      cv.setPointerCapture(e.pointerId);e.preventDefault();
+    });
+    lf.appendChild(d);
+  }
+  {
+    const used=tunnelsUsed(),free=Math.max(0,S.tunnels-used),d=document.createElement('div');
+    d.className='tr static'+(free>0?'':' empty');d.title=tr_('freeT',used,S.tunnels);
+    d.innerHTML=TUNNEL_SVG+'<b>'+free+'</b>';lf.appendChild(d);
+  }
+  S.lines.forEach((L,i)=>{
+    const b=document.createElement('button');b.className='ln'+(i===S.sel?' on':'');b.style.setProperty('--c',L.c);
+    const x=i===S.sel&&L.st.length>0;
+    if(x){b.innerHTML='<svg width="18" height="18" viewBox="0 0 18 18"><path d="M4 4L14 14M14 4L4 14" stroke="#000" stroke-width="3" stroke-linecap="round"/></svg>';b.title=tr_('delLine')}else b.textContent=i+1;
+    b.onclick=()=>{if(x)clearLine(L);else{S.sel=i;ui()}};rt.appendChild(b);
+  });
+}
+function uiOld(){
   bar.innerHTML='';
   S.lines.forEach((L,i)=>{
     const b=document.createElement('button');b.className='ln'+(i===S.sel?' on':'');b.style.setProperty('--c',L.c);
@@ -171,30 +768,188 @@ function ui(){
     S.pool--;L.trains.push({a:L.st[0],b:L.st[1],t:0,wait:.3,pax:[]});ui();
   };
   const clr=document.createElement('button');clr.textContent='Smazat linku';
-  clr.onclick=()=>{const L=S.lines[S.sel];S.pool+=L.trains.length;L.trains=[];L.st=[];buildAdj();ui()};
+  clr.onclick=()=>{const L=S.lines[S.sel];S.pool+=L.trains.length;L.trains=[];L.st=[];S.ghosts=S.ghosts.filter(g=>g.L!==L);buildAdj();ui()};
   const ps=document.createElement('button');ps.textContent=paused?'Pokračovat':'Pauza';
   ps.onclick=()=>{paused=!paused;ui()};
   const hud=document.createElement('span');hud.id='hud';
   const m=document.createElement('div');m.id='msg';
   m.textContent=document.getElementById('msg')?document.getElementById('msg').textContent:'';
   bar.append(add,clr,ps,hud,m);
-  if(!m.textContent)m.textContent='Vyber linku a klikej na stanice, přidají se na její konec. Klik na poslední stanici ji odebere.';
+  if(!m.textContent)m.textContent='Vyber linku, stiskni stanici a táhni na jinou. Linku prodloužíš tažením z jejího konce. Klik na koncovou stanici ji z linky odebere.';
 }
-cv.addEventListener('click',e=>{
-  if(S.over)return;
-  const r=cv.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top;
+let drag=null;
+// kamera: souřadnice obrazovky <-> herní svět
+function toS(e){const r=cv.getBoundingClientRect();return [(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
+function toW(e){const [sx,sy]=toS(e);return [(sx-cam.x)/cam.z,(sy-cam.y)/cam.z]}
+function clampCam(){cam.x=Math.max(W*.3-W*cam.z,Math.min(W*.7,cam.x));cam.y=Math.max(H*.3-H*cam.z,Math.min(H*.7,cam.y))}
+cv.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const [sx,sy]=toS(e),wx=(sx-cam.x)/cam.z,wy=(sy-cam.y)/cam.z;
+  cam.z=Math.max(.5,Math.min(3,cam.z*Math.exp(-e.deltaY*(e.deltaMode===1?.05:.0015))));
+  cam.x=sx-wx*cam.z;cam.y=sy-wy*cam.z;clampCam();
+},{passive:false});
+cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault()});
+function startPan(e){const [sx,sy]=toS(e);pan={sx,sy,ox:cam.x,oy:cam.y};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';e.preventDefault()}
+cv.addEventListener('pointermove',e=>{if(!pan)return;const [sx,sy]=toS(e);cam.x=pan.ox+sx-pan.sx;cam.y=pan.oy+sy-pan.sy;clampCam()});
+const endPan=()=>{if(pan){pan=null;cv.style.cursor='pointer'}};
+cv.addEventListener('pointerup',e=>{if(e.button===1)endPan()});
+cv.addEventListener('pointercancel',endPan);
+function stAt(e,skip){
+  const [mx,my]=toW(e);
   let best=-1,bd=R+14;
-  S.stations.forEach((s,i)=>{const [x,y]=pos(s),d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=i}});
-  if(best<0)return;
-  const L=S.lines[S.sel];
-  if(L.st[L.st.length-1]===best)L.st.pop();
-  else if(!L.st.includes(best))L.st.push(best);
+  S.stations.forEach((s,i)=>{const [x,y]=pos(s),d=Math.hypot(x-mx,y-my);if(d<bd&&i!==skip){bd=d;best=i}});
+  return [best,mx,my];
+}
+cv.addEventListener('pointerdown',e=>{
+  if(e.button===1){startPan(e);return}
+  if(e.button!==0)return;
+  if(S.over||paused)return;
+  const [id,mx,my]=stAt(e,-1),L0=S.lines[S.sel],n0=L0.st.length;
+  for(const L of S.lines)for(const tr of L.trains){
+    if(tr.t<=0||L.st.length<2||!S.stations[tr.a]||!S.stations[tr.b])continue;
+    const [x,y]=at(route(L,tr.a,tr.b),tr.t);
+    if(Math.hypot(x-mx,y-my)<16){tr.held=true;drag={pv:true,tr,L,from:-1,hover:-1,sx:mx,sy:my,moved:false,x:mx,y:my,hit:lineAt(mx,my,40)};cv.setPointerCapture(e.pointerId);e.preventDefault();return}
+  }
+  if(L0.dying&&id>=0&&L0.st.includes(id)){msg(tr_('dying'));return}
+  if(id>=0&&L0.loop&&L0.st.includes(id)){
+    drag={from:id,loopOpen:true,x:mx,y:my,hover:-1,moved:false};cv.setPointerCapture(e.pointerId);e.preventDefault();return;
+  }
+  if(id>=0&&(n0===0||L0.st[0]===id||L0.st[n0-1]===id)){
+    drag={from:id,x:mx,y:my,hover:-1,moved:false};
+  }else{
+    const h=segAt(mx,my);
+    if(!h){if(id>=0)msg(tr_('extend'));return}
+    S.sel=h.L.i;ui();
+    drag={seg:h,from:-1,x:mx,y:my,hover:-1,moved:true};
+  }
+  cv.setPointerCapture(e.pointerId);e.preventDefault();
+});
+cv.addEventListener('pointermove',e=>{
+  if(!drag)return;
+  if(drag.pv){[drag.x,drag.y]=toW(e);if(Math.hypot(drag.x-drag.sx,drag.y-drag.sy)>8)drag.moved=true;drag.hit=lineAt(drag.x,drag.y,40);return}
+  const [id,mx,my]=stAt(e,drag.from),L=S.lines[S.sel];
+  drag.x=mx;drag.y=my;
+  if(drag.from>=0){const P=pos(S.stations[drag.from]);if(Math.hypot(mx-P[0],my-P[1])>R)drag.moved=true}
+  const n=L.st.length;
+  drag.hover=drag.loopOpen?-1:(id>=0&&!L.st.includes(id)?id:-1);
+  if(!drag.loopOpen&&!L.loop&&n>=3&&id>=0&&((drag.from===L.st[0]&&id===L.st[n-1])||(drag.from===L.st[n-1]&&id===L.st[0])))drag.hover=id;
+  if(!drag.loopOpen&&id>=0&&L.st.includes(id)&&!L.dying){if(drag.remId!==id){drag.remId=id;drag.remT=performance.now()}}else drag.remId=-1;
+});
+cv.addEventListener('pointerup',()=>{
+  if(!drag)return;
+  const d=drag,L=S.lines[S.sel],n=L.st.length;drag=null;
+  if(d.pv){endPv(d);return}
+  if(d.remId>=0&&d.hover!==d.remId){removeSt(L,d.remId);buildAdj();ui();return}
+  if(d.seg){if(d.hover>=0)insertSeg(d.seg,d.hover);buildAdj();ui();return}
+  if(d.loopOpen){if(!d.moved)L.loop=false;buildAdj();ui();return}
+  if(d.hover>=0){
+    const ns=L.st.slice();let nl=L.loop,act=0;
+    if(L.st.includes(d.hover)){if(n>=3){nl=true;act=1}}
+    else if(n===0){ns.push(d.from,d.hover);act=2}
+    else if(L.st[n-1]===d.from){ns.push(d.hover);act=3}
+    else{ns.unshift(d.hover);act=4}
+    if(act&&canChange(L,ns,nl)){
+      if(act===1)L.loop=true;
+      else{
+        L.st=ns;
+        if(act===2&&S.pool>0&&!L.trains.length){S.pool--;L.trains.push({a:d.from,b:d.hover,t:0,wait:.3,pax:[]})}
+      }
+    }
+  }else if(!d.moved&&n>0){
+    if(n<=2)L.st=[];else if(L.st[n-1]===d.from)L.st.pop();else L.st.shift();
+  }
   buildAdj();ui();
 });
+cv.addEventListener('pointercancel',()=>{if(drag&&drag.tr)drag.tr.held=false;drag=null});
 addEventListener('keydown',e=>{
-  if('123'.includes(e.key)){S.sel=+e.key-1;ui()}
-  if(e.code==='Space'){paused=!paused;ui();e.preventDefault()}
+  if(/^[1-9]$/.test(e.key)&&+e.key<=S.lines.length){S.sel=+e.key-1;ui()}
+  if(e.key==='0'){cam.x=0;cam.y=0;cam.z=1}
+  if(e.code==='Space'){setSpeed(speed?0:lastSpeed);e.preventDefault()}
 });
 document.getElementById('rs').onclick=()=>{reset()};
-resize();reset();requestAnimationFrame(loop);
+// týdenní hodiny a ovládání času (1 s = 1 herní hodina, den = 24 s)
+const DN=['Mo','Tu','We','Th','Fr','Sa','Su'],MULT=[0,1,1/.66,1/.33];
+let speed=1,lastSpeed=1;
+function spdIcon(n){
+  if(!n)return '<svg width="14" height="14" viewBox="0 0 14 14"><rect x="2.5" y="1.5" width="3" height="11" fill="currentColor"/><rect x="8.5" y="1.5" width="3" height="11" fill="currentColor"/></svg>';
+  let p='';for(let i=0;i<n;i++)p+='<polygon points="'+(i*6)+',1 '+(i*6)+',13 '+(i*6+8)+',7" fill="currentColor"/>';
+  const w=(n-1)*6+8;return '<svg width="'+w+'" height="14" viewBox="0 0 '+w+' 14">'+p+'</svg>';
+}
+const dayEls=DN.map(n=>{const d=document.createElement('div');d.className='dy';d.textContent=n;document.getElementById('days').appendChild(d);return d});
+const spdEls=[0,1,2,3].map(n=>{const b=document.createElement('button');b.innerHTML=spdIcon(n);b.title=tr_('spd')[n];b.onclick=()=>setSpeed(n);document.getElementById('spd').appendChild(b);return b});
+function setSpeed(n){if(n>0)lastSpeed=n;speed=n;paused=n===0;spdEls.forEach((b,i)=>b.classList.toggle('on',i===n))}
+setSpeed(1);
+// výběr odměny po dokončeném týdnu
+function pickReward(k){
+  if(k==='train')S.pool++;else if(k==='tunnel')S.tunnels++;
+  else if(S.lines.length<MAXL)S.lines.push({i:S.lines.length,c:COL[S.lines.length],st:[],trains:[]});
+  S.reward=false;
+  {const rw=document.getElementById('rw');rw.classList.add('out');setTimeout(()=>{rw.style.display='none';rw.classList.remove('out')},220)}
+  ui();
+}
+const rewardBtns=[];
+[['train',TRAIN_SVG,'rTrain'],['tunnel',TUNNEL_SVG,'rTunnel'],['line',LINE_SVG,'rLine']].forEach(([k,svg,tk])=>{
+  const b=document.createElement('button');b.className='rb';
+  b.innerHTML=svg.replace('width="32" height="32"','width="52" height="52"');
+  b.dataset.tk=tk;b.onclick=()=>pickReward(k);rewardBtns.push(b);
+  document.getElementById('rwb').appendChild(b);
+});
+function clockUI(){
+  const day=Math.floor(S.t/24),wd=day%7,wk=Math.floor(day/7)+1;
+  document.getElementById('cinfo').textContent=tr_('clock',S.score,wk,day+1);
+  dayEls.forEach((el,i)=>{el.style.setProperty('--p',(i<wd?100:i===wd?(S.t%24)/24*100:0).toFixed(1)+'%');el.classList.toggle('cur',i===wd)});
+}
+function clearLine(L){S.pool+=L.trains.length;L.trains=[];L.st=[];L.loop=false;L.dying=false;S.ghosts=S.ghosts.filter(g=>g.L!==L);buildAdj();ui()}
+// úvodní menu a levely (řeky jsou v poměrných souřadnicích 0–1)
+let inMenu=true;
+const LEVELS=[
+  {name:'Desert',rivers:[]},
+  {name:'Milom',rivers:[[[-.05,.68],[.2,.6],[.38,.64],[.55,.45],[.75,.4],[1.05,.48]]]},
+  {name:'Ausig',rivers:[[[1.04,.18],[.95,.176],[.9,.189],[.85,.233],[.8,.269],[.75,.304],[.69,.339],[.625,.361],[.565,.37],[.52,.379],[.48,.401],[.458,.441],[.445,.493],[.448,.564],[.458,.634],[.47,.705],[.475,.775],[.488,.846],[.515,.916],[.545,.969],[.565,1],[.58,1.05]]]}
+];
+function drawPreview(c,lv){
+  const x=c.getContext('2d'),w=c.width,h=c.height,wc=getComputedStyle(document.documentElement).getPropertyValue('--water').trim();
+  x.clearRect(0,0,w,h);x.strokeStyle=wc;x.lineWidth=w*.09;x.lineCap='butt';x.lineJoin='round';
+  for(const r of lv.rivers){x.beginPath();r.forEach((p,k)=>x[k?'lineTo':'moveTo'](p[0]*w,p[1]*h));x.stroke()}
+}
+const lvCanvases=[];
+function buildMenu(){
+  const box=document.getElementById('mlv');
+  {const lg=document.getElementById('lang');lg.innerHTML='<span id="langt"></span>';
+   [['en','English'],['cs','Čeština']].forEach(([l,n])=>{const b=document.createElement('button');b.dataset.l=l;b.textContent=n;b.onclick=()=>setLang(l);lg.appendChild(b)})}
+  LEVELS.forEach((lv,i)=>{
+    const b=document.createElement('button');b.className='lv';
+    const c=document.createElement('canvas');c.width=300;c.height=300;
+    const s=document.createElement('span');s.textContent=lv.name;
+    b.append(c,s);b.onclick=()=>startLevel(i);box.appendChild(b);lvCanvases.push(c);
+  });
+}
+function applyLang(){
+  document.documentElement.lang=LANG;document.title=tr_('title');
+  const set=(id,k)=>{const e=document.getElementById(id);if(e)e.textContent=tr_(k)};
+  set('mb','menu');set('rm','menu');set('rs','again');set('rwt','wk');set('rwn','newloc');set('rws','choose');
+  rewardBtns.forEach(b=>{const t=tr_(b.dataset.tk);b.title=t;b.setAttribute('aria-label',t)});
+  dayEls.forEach((el,i)=>el.textContent=tr_('days')[i]);
+  spdEls.forEach((b,n)=>b.title=tr_('spd')[n]);
+  document.querySelectorAll('#lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LANG));
+  const lt=document.getElementById('langt');if(lt)lt.textContent=tr_('lang');
+  if(S.over)document.getElementById('ot').innerHTML=tr_('over',S.score);
+  if(!S.over&&(!document.getElementById('msg').textContent||document.getElementById('msg').dataset.def))
+    {const m=document.getElementById('msg');m.textContent=tr_('hint');m.dataset.def='1'}
+  clockUI();ui();
+}
+function setLang(l){LANG=l;try{localStorage.setItem('om_lang',l)}catch(e){}applyLang()}
+function openMenu(){
+  inMenu=true;lvCanvases.forEach((c,i)=>drawPreview(c,LEVELS[i]));
+  document.getElementById('menu').style.display='flex';
+}
+function startLevel(i){
+  RIVERS=LEVELS[i].rivers;cam.x=0;cam.y=0;cam.z=1;drag=null;pan=null;
+  reset();document.getElementById('menu').style.display='none';inMenu=false;setSpeed(1);
+}
+document.getElementById('mb').onclick=openMenu;
+document.getElementById('rm').onclick=openMenu;
+resize();reset();buildMenu();applyLang();openMenu();requestAnimationFrame(loop);
 </script></body></html>
+
+</body></html>
