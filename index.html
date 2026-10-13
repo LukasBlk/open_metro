@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="cs"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Mini Metro – prototyp</title>
+<title>OpenMetro - Web browser metro game</title>
 <style>
 :root{--water:#c3dcec;--bg:#f4f1ea;--fg:#2a2a2a;--bar:#e6e1d5;--st:#fff;--bd:#c9c3b3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--water:#2b4a62;--bg:#1c1d20;--fg:#e8e6e1;--bar:#2a2b30;--st:#1c1d20;--bd:#444650}}
@@ -82,13 +82,14 @@ button{transition:background .15s,box-shadow .15s,border-color .15s,color .15s}
 <div id="msg" data-def="1">Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.</div>
 <div id="over"><div id="ot"></div><div id="ob"><button id="rs">Hrát znovu</button><button id="rm">Menu</button></div></div>
 <div id="rw"><div id="rwc"><div id="rwt">Week completed!</div><div id="rwn">You received a new locomotive</div><div id="rws">Choose reward</div><div id="rwb"></div></div></div>
-<div id="ver">v0.38</div>
+<div id="ver">v0.59</div>
 <div id="credit">Made by BLK in Czech Republic - 2026</div>
 <div id="menu"><div id="mt">OpenMetro</div><div id="mlv"></div><div id="lang"></div></div>
 <script>
-const COL=['#e0453a','#2b7bd6','#2fa05a','#f08a24','#8e4fc4','#e05fa0','#1fb5b0','#8b5a2b','#c9a800','#34408f'],MAXL=10,CAP=8,VMAX=110,ACC=240,VMIN=14,R=15,MAXS=10;
+// barvy linek podle pražského metra: A zelená, B žlutá, C červená, D modrá; zbytek vlastní
+const COL=['#1fa04a','#f5b800','#e3302b','#1565c0','#8e4fc4','#f08a24','#1fb5b0','#e05fa0','#8b5a2b','#5b6270'],MAXL=10,CAP=8,VMAX=110,ACC=240,VMIN=14,R=15,MAXS=80;
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),bar=document.getElementById('bar');
-let W,H,S,adj,paused=false,last=0,FDT=.016,DPR=1,cam={x:0,y:0,z:1},pan=null;
+let W,H,S,adj,paused=false,last=0,FDT=.016,DPR=1,cam={x:0,y:0,z:1};
 function resize(){const d=DPR=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);if(S&&S.lines)ui()}
 addEventListener('resize',resize);
 new ResizeObserver(resize).observe(cv);
@@ -99,12 +100,20 @@ function reset(){
   for(let i=0;i<4;i++)addStation(true);
   segAnim.clear();buildAdj();document.getElementById('over').style.display='none';document.getElementById('rw').style.display='none';ui();
 }
+const SPECIAL=['d','p','x','a']; // odemykají se po 1., 2., 3. a 4. týdnu
 function addStation(init){
-  const n=S.stations.length,act=n>=6?['c','t','s','d']:['c','t','s'];
+  const n=S.stations.length,act=['c','t','s'],uns=SPECIAL.slice(0,Math.min(SPECIAL.length,S.weeksDone));
   for(let k=0;k<80;k++){
-    const fx=init?.3+Math.random()*.4:.12+Math.random()*.76,fy=init?.3+Math.random()*.4:.1+Math.random()*.8;
+    const g=Math.min(2.5,Math.max(1,Math.sqrt((n+1)/9))),fx=init?.3+Math.random()*.4:.5+(Math.random()-.5)*.76*g,fy=init?.3+Math.random()*.4:.5+(Math.random()-.5)*.8*g;
     if((S.stations.every(o=>Math.hypot((o.fx-fx)*W,(o.fy-fy)*H)>(init?90:120))&&!nearWater(fx*W,fy*H))||k==79){
-      S.stations.push({fx,fy,shape:n<3?act[n]:act[Math.floor(Math.random()*act.length)],pax:[],over:0});return}
+      let sh;
+      if(n<3)sh=act[n];
+      else{
+        const fresh=uns.find(x=>!S.stations.some(o=>o.shape===x));
+        if(fresh)sh=fresh;
+        else{const pool=[...act,...uns],w=pool.map(x=>act.includes(x)?1:.6);let r=Math.random()*w.reduce((a,b)=>a+b,0),i=0;while(i<pool.length-1&&r>=w[i]){r-=w[i];i++}sh=pool[i]}
+      }
+      S.stations.push({fx,fy,shape:sh,pax:[],over:0});return}
   }
 }
 function buildAdj(){
@@ -172,11 +181,12 @@ function insertSeg(h,X){
   if(G.n>0)S.ghosts.push(G);
 }
 // řeka a tunely
-const RW=44;
+let RW=44;
 let RIVERS=[];
-function riverPts(){return RIVERS.map(r=>r.map(p=>[p[0]*W,p[1]*H]))}
-function inWater(x,y,rp){for(const pl of rp)for(let k=0;k<pl.length-1;k++)if(dseg(x,y,pl[k],pl[k+1])<RW/2)return true;return false}
-function nearWater(x,y){const rp=riverPts();for(const pl of rp)for(let k=0;k<pl.length-1;k++)if(dseg(x,y,pl[k],pl[k+1])<RW/2+28)return true;return false}
+// řeka = pole bodů, nebo {w:šířka,p:[body]} (např. rybník)
+function riverPts(){return RIVERS.map(r=>{const pl=(r.p||r).map(p=>[p[0]*W,p[1]*H]);pl.w=r.w||RW;return pl})}
+function inWater(x,y,rp){for(const pl of rp)for(let k=0;k<pl.length-1;k++)if(dseg(x,y,pl[k],pl[k+1])<(pl.w||RW)/2)return true;return false}
+function nearWater(x,y){const rp=riverPts();for(const pl of rp)for(let k=0;k<pl.length-1;k++)if(dseg(x,y,pl[k],pl[k+1])<(pl.w||RW)/2+28)return true;return false}
 function crossings(p){
   const rp=riverPts();let n=0,prev=false;
   for(let k=0;k<p.length-1;k++){
@@ -288,9 +298,14 @@ function move(L,tr,dt){
 function update(dt){
   S.t+=dt;
   const wkNow=Math.floor(S.t/168);
-  if(wkNow>S.weeksDone){S.weeksDone=wkNow;S.reward=true;S.pool++;ui();document.getElementById('rwb').children[2].style.display=S.lines.length>=MAXL?'none':'';document.getElementById('rw').style.display='flex';return}
+  if(wkNow>S.weeksDone){S.weeksDone=wkNow;S.reward=true;S.pool++;document.getElementById('rwn').innerHTML=tr_('newloc')+(S.weeksDone<=SPECIAL.length?'<br>'+tr_('newShape'):'');ui();document.getElementById('rwb').children[2].style.display=S.lines.length>=MAXL?'none':'';document.getElementById('rw').style.display='flex';return}
   if((S.spawnP-=dt)<=0){S.spawnP=Math.max(1.2,2.6-S.t/150);spawnPax()}
-  if((S.spawnS-=dt)<=0){S.spawnS=20;if(S.stations.length<MAXS){addStation();msg(tr_('newSt'))}}
+  if((S.spawnS-=dt)<=0){
+    // 1. týden: 8 stanic (po 20 s); každý další týden +5 stanic rovnoměrně rozložených přes týden
+    const cap=Math.min(MAXS,8+5*S.weeksDone);
+    S.spawnS=S.weeksDone===0?20:168/5;
+    if(S.stations.length<cap){addStation();msg(tr_('newSt'))}
+  }
   for(const L of S.lines){
     for(const tr of L.trains)move(L,tr,dt);
     if(L.trains.some(t=>t.dead))L.trains=L.trains.filter(t=>!t.dead);
@@ -306,6 +321,9 @@ function shp(sh,x,y,r){
   if(sh==='c'){ctx.beginPath();ctx.arc(x,y,r,0,7)}
   else if(sh==='t')poly(3,-Math.PI/2,x,y,r*1.2);
   else if(sh==='s')poly(4,-Math.PI/4,x,y,r*1.15);
+  else if(sh==='p')poly(5,-Math.PI/2,x,y,r*1.15);
+  else if(sh==='x'){const a=r*1.2,b=a*.36,P=[[-b,-a],[b,-a],[b,-b],[a,-b],[a,b],[b,b],[b,a],[-b,a],[-b,b],[-a,b],[-a,-b],[-b,-b]];ctx.beginPath();P.forEach((q,i)=>ctx[i?'lineTo':'moveTo'](x+q[0],y+q[1]));ctx.closePath()}
+  else if(sh==='a'){ctx.beginPath();for(let i=0;i<10;i++){const rr=i%2?r*.55:r*1.35,an=-Math.PI/2+i*Math.PI/5;ctx[i?'lineTo':'moveTo'](x+Math.cos(an)*rr,y+Math.sin(an)*rr)}ctx.closePath()}
   else poly(4,-Math.PI/2,x,y,r*1.25);
 }
 function offs(L,a,b){
@@ -577,7 +595,7 @@ function draw(){
   ctx.setTransform(DPR*cam.z,0,0,DPR*cam.z,DPR*cam.x,DPR*cam.y);
   ctx.lineCap='round';ctx.lineJoin='round';
   const wc=cs.getPropertyValue('--water').trim();
-  {const rp=riverPts();ctx.strokeStyle=wc;ctx.lineWidth=RW;ctx.lineCap='butt';ctx.lineJoin='round';for(const pl of rp){ctx.beginPath();ctx.moveTo(pl[0][0],pl[0][1]);for(const q of pl.slice(1))ctx.lineTo(q[0],q[1]);ctx.stroke()}ctx.lineCap='round'}
+  {const rp=riverPts();ctx.strokeStyle=wc;ctx.lineWidth=RW;ctx.lineCap='butt';ctx.lineJoin='round';for(const pl of rp){ctx.lineWidth=pl.w;ctx.lineCap=pl.w>RW?'round':'butt';ctx.beginPath();ctx.moveTo(pl[0][0],pl[0][1]);for(const q of pl.slice(1))ctx.lineTo(q[0],q[1]);ctx.stroke()}ctx.lineCap='round'}
   const gh=[];
   for(const g of S.ghosts){const pa=g.path||[g.a,g.b];for(let k=0;k<pa.length-1;k++)gh.push([g.L,pa[k],pa[k+1]])}
   for(const L of S.lines)if(L.dying&&L.st.length>=2)gh.push([L,L.st[0],L.st[1]]);
@@ -678,7 +696,7 @@ function draw(){
     ctx.save();ctx.translate(x,y);ctx.rotate(da);
     ctx.fillStyle=(tr.rm||tr.mv)?'#8a8f98':L.c;ctx.beginPath();ctx.roundRect(-17,-9,34,18,4);ctx.fill();
     ctx.restore();
-    tr.pax.forEach((p,k)=>paxDraw(p,tr,k,-12+(k%4)*8,-4.5+Math.floor(k/4)*9,x,y,da,3,'#fff'));
+    tr.pax.forEach((p,k)=>paxDraw(p,tr,k,-12+(k%4)*8,-4.5+Math.floor(k/4)*9,x,y,da,3,(L.c==='#f5b800'&&!tr.rm&&!tr.mv)?'#2a2a2a':'#fff'));
   }
   }
   if(drag&&drag.pv){
@@ -698,22 +716,41 @@ function draw(){
   }
   clockUI();
 }
+// automatická kamera: všechny stanice vždy na obrazovce (mimo panely), plynulé dojíždění
+function camTarget(){
+  const ml=96,mr=96,mt=92,mb=46,pad=42;
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const st of S.stations){const p=pos(st);x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1])}
+  if(x0>x1)return {x:0,y:0,z:1};
+  x0-=pad;x1+=pad;y0-=pad;y1+=pad;
+  const aw=Math.max(100,W-ml-mr),ah=Math.max(100,H-mt-mb);
+  const z=Math.max(.35,Math.min(1,aw/(x1-x0),ah/(y1-y0)));
+  let cx=W/2*(1-z),cy=H/2*(1-z);
+  const sh=(lo,hi,a,b,c)=>{const l=lo*z+c,r=hi*z+c;if(r-l>b-a)return (a+b)/2-(lo+hi)*z/2;if(l<a)return c+(a-l);if(r>b)return c-(r-b);return c};
+  cx=sh(x0,x1,ml,W-mr,cx);cy=sh(y0,y1,mt,H-mb,cy);
+  return {x:cx,y:cy,z};
+}
+function fitCam(dt,snap){
+  const t=camTarget(),k=snap?1:1-Math.exp(-dt*2.2);
+  cam.z+=(t.z-cam.z)*k;cam.x+=(t.x-cam.x)*k;cam.y+=(t.y-cam.y)*k;
+}
 function loop(t){
   const dt=Math.min(.05,(t-last)/1000||0);last=t;FDT=dt;
   if(speed>0&&!S.over&&!S.reward&&!inMenu)update(dt*MULT[speed]);
+  if(!inMenu)fitCam(dt);
   draw();requestAnimationFrame(loop);
 }
 // --- jazyky ---
 const I18N={
-  en:{title:'OpenMetro – prototype',menu:'Menu',again:'Play again',hint:'Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.',
-    wk:'Week completed!',newloc:'You received a new locomotive',choose:'Choose reward',
+  en:{title:'OpenMetro - Web browser metro game',menu:'Menu',again:'Play again',hint:'Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.',
+    wk:'Week completed!',newloc:'You received a new locomotive',newShape:'A new station shape appears!',choose:'Choose reward',
     needT:n=>'Not enough tunnels – the connection crosses water ('+n+' missing).',newSt:'New station!',
     over:sc=>'<div class="ot1">Game over</div><div class="ot2"><b>'+sc+'</b><span>Passengers delivered</span></div>',dragTrain:'Drag onto a line',noTrain:'No free trains',
     freeT:(u,t)=>'Free tunnels ('+u+' of '+t+' used)',delLine:'Delete line',dying:'This line is closing down.',extend:'A line can only be extended from its end.',
     spd:['Pause','Normal speed','Speed 2×','Speed 3×'],rTrain:'Train',rTunnel:'Tunnel',rLine:'New line',
     days:['Mo','Tu','We','Th','Fr','Sa','Su'],clock:(s,w,d)=>'Passengers handled: '+s+' · Week '+w+' · Day: '+d,lang:'Language'},
-  cs:{title:'OpenMetro – prototyp',menu:'Menu',again:'Hrát znovu',hint:'Vpravo vyber linku a táhni mezi stanicemi. Vlaky táhni z levého panelu na linku.',
-    wk:'Týden dokončen!',newloc:'Získal jsi novou lokomotivu',choose:'Vyber odměnu',
+  cs:{title:'OpenMetro - Web browser metro game',menu:'Menu',again:'Hrát znovu',hint:'Vpravo vyber linku a táhni mezi stanicemi. Vlaky táhni z levého panelu na linku.',
+    wk:'Týden dokončen!',newloc:'Získal jsi novou lokomotivu',newShape:'Objevuje se nový tvar stanice!',choose:'Vyber odměnu',
     needT:n=>'Nemáš dost tunelů – spojení vede přes vodu (chybí '+n+').',newSt:'Nová stanice!',
     over:sc=>'<div class="ot1">Konec hry</div><div class="ot2"><b>'+sc+'</b><span>Přepravených cestujících</span></div>',dragTrain:'Přetáhni na linku',noTrain:'Žádné volné vlaky',
     freeT:(u,t)=>'Volné tunely (použito '+u+' z '+t+')',delLine:'Smazat linku',dying:'Linka právě zaniká.',extend:'Linku lze prodloužit jen z jejího konce.',
@@ -748,7 +785,7 @@ function ui(){
     d.innerHTML=TUNNEL_SVG+'<b>'+free+'</b>';lf.appendChild(d);
   }
   S.lines.forEach((L,i)=>{
-    const b=document.createElement('button');b.className='ln'+(i===S.sel?' on':'');b.style.setProperty('--c',L.c);
+    const b=document.createElement('button');b.className='ln'+(i===S.sel?' on':'');b.style.setProperty('--c',L.c);b.style.color=L.c==='#f5b800'?'#2a2a2a':'#fff';
     const x=i===S.sel&&L.st.length>0;
     if(x){b.innerHTML='<svg width="18" height="18" viewBox="0 0 18 18"><path d="M4 4L14 14M14 4L4 14" stroke="#000" stroke-width="3" stroke-linecap="round"/></svg>';b.title=tr_('delLine')}else b.textContent=i+1;
     b.onclick=()=>{if(x)clearLine(L);else{S.sel=i;ui()}};rt.appendChild(b);
@@ -781,19 +818,8 @@ let drag=null;
 // kamera: souřadnice obrazovky <-> herní svět
 function toS(e){const r=cv.getBoundingClientRect();return [(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*H/r.height]}
 function toW(e){const [sx,sy]=toS(e);return [(sx-cam.x)/cam.z,(sy-cam.y)/cam.z]}
-function clampCam(){cam.x=Math.max(W*.3-W*cam.z,Math.min(W*.7,cam.x));cam.y=Math.max(H*.3-H*cam.z,Math.min(H*.7,cam.y))}
-cv.addEventListener('wheel',e=>{
-  e.preventDefault();
-  const [sx,sy]=toS(e),wx=(sx-cam.x)/cam.z,wy=(sy-cam.y)/cam.z;
-  cam.z=Math.max(.5,Math.min(3,cam.z*Math.exp(-e.deltaY*(e.deltaMode===1?.05:.0015))));
-  cam.x=sx-wx*cam.z;cam.y=sy-wy*cam.z;clampCam();
-},{passive:false});
+cv.addEventListener('wheel',e=>e.preventDefault(),{passive:false}); // zoom a posun jsou zakázané, kamera je automatická
 cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault()});
-function startPan(e){const [sx,sy]=toS(e);pan={sx,sy,ox:cam.x,oy:cam.y};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';e.preventDefault()}
-cv.addEventListener('pointermove',e=>{if(!pan)return;const [sx,sy]=toS(e);cam.x=pan.ox+sx-pan.sx;cam.y=pan.oy+sy-pan.sy;clampCam()});
-const endPan=()=>{if(pan){pan=null;cv.style.cursor='pointer'}};
-cv.addEventListener('pointerup',e=>{if(e.button===1)endPan()});
-cv.addEventListener('pointercancel',endPan);
 function stAt(e,skip){
   const [mx,my]=toW(e);
   let best=-1,bd=R+14;
@@ -801,7 +827,6 @@ function stAt(e,skip){
   return [best,mx,my];
 }
 cv.addEventListener('pointerdown',e=>{
-  if(e.button===1){startPan(e);return}
   if(e.button!==0)return;
   if(S.over||paused)return;
   const [id,mx,my]=stAt(e,-1),L0=S.lines[S.sel],n0=L0.st.length;
@@ -863,7 +888,6 @@ cv.addEventListener('pointerup',()=>{
 cv.addEventListener('pointercancel',()=>{if(drag&&drag.tr)drag.tr.held=false;drag=null});
 addEventListener('keydown',e=>{
   if(/^[1-9]$/.test(e.key)&&+e.key<=S.lines.length){S.sel=+e.key-1;ui()}
-  if(e.key==='0'){cam.x=0;cam.y=0;cam.z=1}
   if(e.code==='Space'){setSpeed(speed?0:lastSpeed);e.preventDefault()}
 });
 document.getElementById('rs').onclick=()=>{reset()};
@@ -904,13 +928,16 @@ function clearLine(L){S.pool+=L.trains.length;L.trains=[];L.st=[];L.loop=false;L
 let inMenu=true;
 const LEVELS=[
   {name:'Desert',rivers:[]},
-  {name:'Milom',rivers:[[[-.05,.68],[.2,.6],[.38,.64],[.55,.45],[.75,.4],[1.05,.48]]]},
-  {name:'Ausig',rivers:[[[1.04,.18],[.95,.176],[.9,.189],[.85,.233],[.8,.269],[.75,.304],[.69,.339],[.625,.361],[.565,.37],[.52,.379],[.48,.401],[.458,.441],[.445,.493],[.448,.564],[.458,.634],[.47,.705],[.475,.775],[.488,.846],[.515,.916],[.545,.969],[.565,1],[.58,1.05]]]}
+  {name:'Ústí',rivers:[[[1.04,.18],[.95,.176],[.9,.189],[.85,.233],[.8,.269],[.75,.304],[.69,.339],[.625,.361],[.565,.37],[.52,.379],[.48,.401],[.458,.441],[.445,.493],[.448,.564],[.458,.634],[.47,.705],[.475,.775],[.488,.846],[.515,.916],[.545,.969],[.565,1],[.58,1.05]]]},
+  {name:'Praha',rivers:[[[0.377,-2.034],[0.371,-0.246],[0.358,-0.147],[0.341,-0.046],[0.337,0.011],[0.341,0.060],[0.363,0.129],[0.356,0.167],[0.350,0.204],[0.371,0.239],[0.415,0.254],[0.466,0.267],[0.518,0.276],[0.570,0.267],[0.617,0.264],[0.661,0.297],[0.682,0.351],[0.665,0.404],[0.622,0.444],[0.561,0.461],[0.501,0.471],[0.453,0.492],[0.428,0.517],[0.418,0.559],[0.420,0.601],[0.430,0.651],[0.440,0.692],[0.430,0.734],[0.432,0.776],[0.436,0.826],[0.425,0.867],[0.406,0.926],[0.390,0.967],[0.380,1.043],[0.371,2.200]]]},
+  {name:'Brno',rw:18,rivers:[[[0.065,-0.336],[0.070,0.017],[0.081,0.084],[0.108,0.117],[0.151,0.138],[0.178,0.159],[0.183,0.180],[0.194,0.214],[0.208,0.247],[0.224,0.268],[0.232,0.294],[0.235,0.323],[0.243,0.340],[0.254,0.357],[0.259,0.378],[0.258,0.411],[0.264,0.453],[0.264,0.495],[0.270,0.537],[0.281,0.570],[0.300,0.600],[0.324,0.615],[0.351,0.617],[0.378,0.611],[0.410,0.594],[0.434,0.585],[0.453,0.586],[0.472,0.600],[0.496,0.625],[0.518,0.654],[0.542,0.688],[0.561,0.726],[0.575,0.763],[0.580,0.805],[0.583,0.847],[0.586,0.889],[0.594,0.931],[0.603,0.971],[0.607,1.049],[0.610,1.426]]]},
+  {name:'České Budějovice',rw:18,rivers:[[[0.267,-0.940],[0.276,-0.235],[0.282,0.049],[0.297,0.074],[0.312,0.110],[0.328,0.157],[0.339,0.196],[0.340,0.235],[0.331,0.274],[0.325,0.301],[0.328,0.329],[0.346,0.348],[0.361,0.364],[0.370,0.399],[0.379,0.435],[0.394,0.462],[0.413,0.489],[0.413,0.532],[0.394,0.564],[0.373,0.619],[0.364,0.642],[0.334,0.689],[0.303,0.720],[0.288,0.760],[0.291,0.791],[0.316,0.822],[0.346,0.842],[0.364,0.861],[0.367,0.885],[0.349,0.908],[0.346,0.948],[0.349,0.971],[0.343,1.000],[0.340,1.331],[0.340,1.879]],[[0.413,0.489],[0.443,0.501],[0.473,0.521],[0.482,0.564],[0.482,0.626],[0.479,0.689],[0.482,0.728],[0.504,0.791],[0.534,0.846],[0.558,0.885],[0.573,0.924],[0.575,0.971],[0.576,1.331],[0.576,1.879]]]},
+  {name:'Plzeň',rw:22,rivers:[[[-0.286,-0.165],[0.057,0.033],[0.115,0.058],[0.155,0.076],[0.178,0.091],[0.198,0.098],[0.215,0.116],[0.229,0.140],[0.252,0.161],[0.275,0.178],[0.309,0.178],[0.329,0.194],[0.338,0.227],[0.344,0.240],[0.367,0.264],[0.389,0.266],[0.418,0.264],[0.441,0.266],[0.455,0.256],[0.458,0.241],[0.475,0.244],[0.498,0.256],[0.527,0.260],[0.561,0.248],[0.596,0.236],[0.630,0.219],[0.645,0.217]],[[0.710,-0.992],[0.707,-0.165],[0.704,0.008],[0.703,0.050],[0.696,0.099],[0.676,0.149],[0.659,0.186],[0.644,0.219],[0.630,0.264],[0.616,0.306],[0.596,0.343],[0.573,0.364],[0.567,0.388],[0.578,0.413],[0.596,0.430],[0.610,0.450],[0.613,0.475],[0.599,0.504],[0.578,0.521],[0.567,0.545],[0.576,0.579],[0.596,0.599],[0.624,0.616],[0.639,0.636],[0.633,0.665],[0.621,0.694],[0.627,0.727],[0.630,0.756],[0.624,0.781],[0.596,0.793],[0.561,0.800],[0.515,0.803],[0.475,0.808],[0.435,0.814],[0.401,0.818]],{w:190,p:[[0.298,0.835],[0.372,0.835]]},[[0.298,0.917],[0.309,0.950],[0.344,0.988],[0.367,1.157],[0.372,1.983]]]}
 ];
 function drawPreview(c,lv){
   const x=c.getContext('2d'),w=c.width,h=c.height,wc=getComputedStyle(document.documentElement).getPropertyValue('--water').trim();
-  x.clearRect(0,0,w,h);x.strokeStyle=wc;x.lineWidth=w*.09;x.lineCap='butt';x.lineJoin='round';
-  for(const r of lv.rivers){x.beginPath();r.forEach((p,k)=>x[k?'lineTo':'moveTo'](p[0]*w,p[1]*h));x.stroke()}
+  x.clearRect(0,0,w,h);x.strokeStyle=wc;x.lineWidth=w*.09*((lv.rw||44)/44);x.lineCap='butt';x.lineJoin='round';
+  for(const r of lv.rivers){const pts=r.p||r;x.lineWidth=w*.09*((r.w||lv.rw||44)/44);x.lineCap=r.w?'round':'butt';x.beginPath();pts.forEach((p,k)=>x[k?'lineTo':'moveTo'](p[0]*w,p[1]*h));x.stroke()}
 }
 const lvCanvases=[];
 function buildMenu(){
@@ -944,8 +971,8 @@ function openMenu(){
   document.getElementById('menu').style.display='flex';
 }
 function startLevel(i){
-  RIVERS=LEVELS[i].rivers;cam.x=0;cam.y=0;cam.z=1;drag=null;pan=null;
-  reset();document.getElementById('menu').style.display='none';inMenu=false;setSpeed(1);
+  RIVERS=LEVELS[i].rivers;RW=LEVELS[i].rw||44;cam.x=0;cam.y=0;cam.z=1;drag=null;
+  reset();fitCam(0,true);document.getElementById('menu').style.display='none';inMenu=false;setSpeed(1);
 }
 document.getElementById('mb').onclick=openMenu;
 document.getElementById('rm').onclick=openMenu;
