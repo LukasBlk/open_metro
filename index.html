@@ -55,6 +55,8 @@ button.ln.on{box-shadow:0 0 0 3px var(--fg)}
 #rwb{display:flex;gap:14px;margin-top:14px;justify-content:center}
 .rb{width:88px;height:88px;border-radius:16px;display:flex;align-items:center;justify-content:center;padding:0}
 .rb:hover{background:var(--bd)}
+.rbw{display:flex;flex-direction:column;align-items:center;gap:8px}
+.rbl{font-size:13px;font-weight:600;opacity:.75}
 .tr.static{cursor:default}
 #mb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:max(12px,env(safe-area-inset-left,0px))}
 #menu{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:40px;padding:16px;box-sizing:border-box;overflow:auto}
@@ -62,6 +64,7 @@ button.ln.on{box-shadow:0 0 0 3px var(--fg)}
 #mlv{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
 .lv{display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;background:none;border:none;padding:0}
 .lv canvas{width:150px;height:150px;border:3px solid var(--fg);border-radius:14px;background:var(--st);display:block}
+.lv.sb canvas{border:6px solid;border-image:repeating-linear-gradient(-45deg,#f5c400 0 12px,#161616 12px 24px) 6;border-radius:0;box-sizing:border-box}
 .lv:hover canvas{box-shadow:0 0 0 4px var(--bd)}
 .lv span{font-size:18px;font-weight:700}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -73,6 +76,16 @@ button.ln.on{box-shadow:0 0 0 3px var(--fg)}
 button{transition:background .15s,box-shadow .15s,border-color .15s,color .15s}
 #lang{display:flex;gap:8px;align-items:center;font-size:14px}#lang span{opacity:.6;margin-right:4px}#lang button{font:inherit;padding:6px 12px;border-radius:8px;border:2px solid currentColor;background:transparent;color:inherit;cursor:pointer;opacity:.6}#lang button.on{opacity:1;font-weight:700}
 #credit{position:fixed;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));font-size:12px;opacity:.5;pointer-events:none;z-index:50;text-align:right}
+#tut{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(44px + env(safe-area-inset-bottom,0px));display:none;align-items:center;gap:14px;max-width:min(560px,calc(100% - 200px));background:var(--bar);color:var(--fg);border:1px solid var(--bd);border-radius:16px;padding:12px 16px;box-shadow:0 6px 24px rgba(0,0,0,.18);z-index:40;animation:pop .3s ease}
+#tutn{font-weight:800;font-size:13px;opacity:.6;white-space:nowrap}
+#tutt{font-size:15px;font-weight:600;line-height:1.35}
+#tutb{display:flex;gap:8px}
+#tutb button{font-size:13px;font-weight:700;padding:6px 12px;border-radius:10px;white-space:nowrap}
+#tut.ok{border-color:#1fa04a;box-shadow:0 0 0 2px #1fa04a}
+@keyframes tutp{0%{box-shadow:0 0 0 0 rgba(245,184,0,.9)}100%{box-shadow:0 0 0 14px rgba(245,184,0,0)}}
+.tutp{animation:tutp 1.2s infinite;border-radius:12px}
+button.ln.tutp{border-radius:50%}
+.lv.tut canvas{display:block}
 #ver{position:fixed;left:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));font-size:12px;opacity:.5;pointer-events:none;z-index:50}
 </style></head><body>
 <canvas id="cv"></canvas>
@@ -82,9 +95,10 @@ button{transition:background .15s,box-shadow .15s,border-color .15s,color .15s}
 <div id="msg" data-def="1">Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.</div>
 <div id="over"><div id="ot"></div><div id="ob"><button id="rs">Hrát znovu</button><button id="rm">Menu</button></div></div>
 <div id="rw"><div id="rwc"><div id="rwt">Week completed!</div><div id="rwn">You received a new locomotive</div><div id="rws">Choose reward</div><div id="rwb"></div></div></div>
-<div id="ver">v0.60</div>
+<div id="ver">v0.76</div>
 <div id="credit">Made by BLK in Czech Republic - 2026</div>
-<div id="menu"><div id="mt">OpenMetro</div><div id="mlv"></div><div id="lang"></div></div>
+<div id="menu"><div id="mt">OpenMetro</div><div id="mlv"></div><div id="mtu"></div><div id="lang"></div></div>
+<div id="tut"><div id="tutn"></div><div id="tutt"></div><div id="tutb"></div></div>
 <script>
 // barvy linek podle pražského metra: A zelená, B žlutá, C červená, D modrá; zbytek vlastní
 const COL=['#1fa04a','#f5b800','#e3302b','#1565c0','#8e4fc4','#f08a24','#1fb5b0','#e05fa0','#8b5a2b','#5b6270'],MAXL=10,CAP=8,VMAX=110,ACC=240,VMIN=14,R=15,MAXS=80;
@@ -103,18 +117,28 @@ function reset(){
 const SPECIAL=['d','p','x','a']; // odemykají se po 1., 2., 3. a 4. týdnu
 function addStation(init){
   const n=S.stations.length,act=['c','t','s'],uns=SPECIAL.slice(0,Math.min(SPECIAL.length,S.weeksDone));
-  for(let k=0;k<80;k++){
-    const g=Math.min(2.5,Math.max(1,Math.sqrt((n+1)/9))),fx=init?.3+Math.random()*.4:.5+(Math.random()-.5)*.76*g,fy=init?.3+Math.random()*.4:.5+(Math.random()-.5)*.8*g;
-    if((S.stations.every(o=>Math.hypot((o.fx-fx)*W,(o.fy-fy)*H)>(init?90:120))&&!nearWater(fx*W,fy*H))||k==79){
-      let sh;
-      if(n<3)sh=act[n];
-      else{
-        const fresh=uns.find(x=>!S.stations.some(o=>o.shape===x));
-        if(fresh)sh=fresh;
-        else{const pool=[...act,...uns],w=pool.map(x=>act.includes(x)?1:.6);let r=Math.random()*w.reduce((a,b)=>a+b,0),i=0;while(i<pool.length-1&&r>=w[i]){r-=w[i];i++}sh=pool[i]}
-      }
-      S.stations.push({fx,fy,shape:sh,pax:[],over:0});return}
+  // oblast roste pomalu (třetinově), nová stanice vzniká poblíž stávající sítě; občas (~20 %) dál, jako předměstí
+  const g=Math.min(2.5,Math.max(1,Math.pow((n+1)/9,.33)));
+  const far=!init&&n>=4&&Math.random()<.2,lo=init?90:far?220:115,hi=init?1e9:far?380:215;
+  let pick=null,fb=null,fbs=1e9;
+  for(let k=0;k<150&&!pick;k++){
+    const fx=init?.3+Math.random()*.4:.5+(Math.random()-.5)*.76*g,fy=init?.3+Math.random()*.4:.5+(Math.random()-.5)*.8*g;
+    if(nearWater(fx*W,fy*H))continue;
+    let md=1e9;for(const o of S.stations)md=Math.min(md,Math.hypot((o.fx-fx)*W,(o.fy-fy)*H));
+    if(md<90)continue;
+    if(md>=lo&&md<=hi)pick={fx,fy};
+    else{const sc=md<lo?lo-md:md-hi;if(sc<fbs){fbs=sc;fb={fx,fy}}}
   }
+  if(!pick)pick=fb||{fx:.5+(Math.random()-.5)*.6,fy:.5+(Math.random()-.5)*.6};
+  const {fx,fy}=pick;
+  let sh;
+  if(n<3)sh=act[n];
+  else{
+    const fresh=uns.find(x=>!S.stations.some(o=>o.shape===x));
+    if(fresh)sh=fresh;
+    else{const pool=[...act,...uns],w=pool.map(x=>act.includes(x)?1:.6);let r=Math.random()*w.reduce((a,b)=>a+b,0),i=0;while(i<pool.length-1&&r>=w[i]){r-=w[i];i++}sh=pool[i]}
+  }
+  S.stations.push({fx,fy,shape:sh,pax:[],over:0,sp:init?undefined:0});
 }
 function buildAdj(){
   adj=S.stations.map(()=>new Set());
@@ -146,7 +170,7 @@ function lineAt(mx,my,maxD){
 function placeOn(tr,h,old){
   const st=h.L.st,fwd=h.side>=0,i=h.i,f=Math.max(.02,Math.min(.98,h.f));
   const nb=sb(h.L,i);endGhost(tr);
-  tr.a=fwd?st[i]:nb;tr.b=fwd?nb:st[i];tr.t=fwd?f:1-f;tr.wait=0;tr.rm=false;
+  tr.a=fwd?st[i]:nb;tr.b=fwd?nb:st[i];tr.t=fwd?f:1-f;tr.wait=0;tr.rm=false;tr.sk=undefined;
   if(old!==h.L){if(old)old.trains.splice(old.trains.indexOf(tr),1);h.L.trains.push(tr)}
 }
 function endPv(d){
@@ -249,7 +273,7 @@ function moveGR(L,tr,dt){
   if(B===G.x){
     const nxt=G.path.length===3?(tr.a===G.path[0]?G.path[2]:G.path[0]):tr.a;
     stop(tr,sB,nxt);
-    tr.a=B;tr.b=nxt;tr.t=0;tr.v=0;tr.wait=.3;return;
+    tr.a=B;tr.b=nxt;tr.t=0;tr.v=0;tr.wait=.3;tr.sk=undefined;return;
   }
   const n=st.length,ib=st.indexOf(B);let nx;
   if(G.path.length===3){
@@ -258,7 +282,7 @@ function moveGR(L,tr,dt){
     else{const dr=Math.sign(ib-ia);nx=st[ib+dr]!==undefined?st[ib+dr]:st[ib-dr]}
   }else nx=ib===0?st[1]:st[n-2];
   stop(tr,sB,nx);
-  endGhost(tr);tr.a=B;tr.b=nx;tr.t=0;tr.v=0;tr.wait=.8;
+  endGhost(tr);tr.a=B;tr.b=nx;tr.t=0;tr.v=0;tr.wait=.8;tr.sk=undefined;
 }
 function nextHop(f,sh){
   const first=new Map([[f,null]]),q=[f];
@@ -288,7 +312,7 @@ function move(L,tr,dt){
   if(tr.g&&tr.g.path){moveGR(L,tr,dt);return}
   const st=L.st;if(st.length<2){if(tr.g)endGhost(tr);return}
   const ia=st.indexOf(tr.a),ib=st.indexOf(tr.b);
-  if(ia<0||ib<0||(!tr.g&&!adjIdx(L,ia,ib))){endGhost(tr);tr.a=st[0];tr.b=st[1];tr.t=0;tr.wait=0;return}
+  if(ia<0||ib<0||(!tr.g&&!adjIdx(L,ia,ib))){endGhost(tr);tr.a=st[0];tr.b=st[1];tr.t=0;tr.wait=0;tr.sk=undefined;return}
   if(tr.wait>0){tr.wait-=dt;return}
   advance(tr,L,dt);
   if(tr.t>=1){
@@ -296,16 +320,18 @@ function move(L,tr,dt){
     if(L.loop){const n=st.length,d=(ib-ia+n)%n,dir=tr.g?(d<=n-d?1:-1):(d===1?1:-1);nx=st[(ib+dir+n)%n]}
     else{const dr=Math.sign(ib-ia);nx=st[ib+dr]!==undefined?st[ib+dr]:st[ib-dr]}
     if(tr.rm){const s=S.stations[tr.b];for(const p of tr.pax){if(p.shape===s.shape)S.score++;else s.pax.push(p)}tr.pax=[];endGhost(tr);tr.dead=true;const m=tr.mv;if(m&&validMv(m))m.L.trains.push({a:m.a,b:m.b,t:m.t,wait:0,pax:[]});else S.pool++;ui();return}
+    if(tr.sk&&canPass(L,tr)){endGhost(tr);tr.sk=undefined;tr.a=tr.b;tr.b=nx;tr.t=0;tr.wait=0;return} // projede bez zastavení
+    tr.sk=undefined;
     stop(tr,S.stations[tr.b],nx);
     endGhost(tr);tr.a=tr.b;tr.b=nx;tr.t=0;tr.v=0;tr.wait=.8;
   }
 }
 function update(dt){
   S.t+=dt;
-  const wkNow=Math.floor(S.t/168);
+  const wkNow=TUT?0:Math.floor(S.t/168);
   if(wkNow>S.weeksDone){S.weeksDone=wkNow;S.reward=true;S.pool++;document.getElementById('rwn').innerHTML=tr_('newloc')+(S.weeksDone<=SPECIAL.length?'<br>'+tr_('newShape'):'');ui();document.getElementById('rwb').children[2].style.display=S.lines.length>=MAXL?'none':'';document.getElementById('rw').style.display='flex';return}
-  if((S.spawnP-=dt)<=0){S.spawnP=Math.max(1.2,2.6-S.t/150);spawnPax()}
-  if((S.spawnS-=dt)<=0){
+  if((S.spawnP-=dt)<=0){S.spawnP=Math.max(1.2,2.6-S.t/150);if(!TUT||TUT.step>=3)spawnPax()}
+  if(!TUT&&(S.spawnS-=dt)<=0){
     // 1. týden: 8 stanic (po 20 s); každý další týden +5 stanic rovnoměrně rozložených přes týden
     const cap=Math.min(MAXS,8+5*S.weeksDone);
     S.spawnS=S.weeksDone===0?20:168/5;
@@ -317,7 +343,7 @@ function update(dt){
     if(L.dying&&!L.trains.length){L.st=[];L.loop=false;L.dying=false;S.ghosts=S.ghosts.filter(g=>g.L!==L);buildAdj();ui()}
   }
   for(const s of S.stations){
-    if(s.pax.length>=8)s.over+=dt;else s.over=Math.max(0,s.over-dt*2);
+    if(SANDBOX)s.over=0;else if(s.pax.length>=8)s.over+=dt;else s.over=Math.max(0,s.over-dt*2);
     if(s.over>14&&!S.over){S.over=true;document.getElementById('ot').innerHTML=tr_('over',S.score);document.getElementById('over').style.display='flex'}
   }
 }
@@ -552,9 +578,23 @@ function sm(p){
   out.push(p[p.length-1]);return out;
 }
 // rozjezd a brzdění vlaku
+// následující zastávka za stanicí tr.b (stejná logika jako ve move)
+function nextAfter(L,tr){
+  const st=L.st,ia=st.indexOf(tr.a),ib=st.indexOf(tr.b);
+  if(ia<0||ib<0||st.length<2)return undefined;
+  if(L.loop){const n=st.length,d=(ib-ia+n)%n,dir=tr.g?(d<=n-d?1:-1):(d===1?1:-1);return st[(ib+dir+n)%n]}
+  const dr=Math.sign(ib-ia);return st[ib+dr]!==undefined?st[ib+dr]:st[ib-dr];
+}
+// prázdný vlak do prázdné stanice (a bez otáčení na konečné) stanicí jen projede
+function canPass(L,tr){
+  const s=S.stations[tr.b];
+  if(!s||tr.rm||tr.mv||tr.g||tr.pax.length||s.pax.length)return false;
+  const nx=nextAfter(L,tr);return nx!==undefined&&nx!==tr.a;
+}
 function advance(tr,L,dt){
   const D=plen(route(L,tr.a,tr.b))||1,rem=Math.max(0,D-tr.t*D);
-  const cap=Math.min(VMAX,Math.sqrt(2*ACC*rem)+VMIN);
+  if(rem<45&&tr.sk===undefined)tr.sk=canPass(L,tr)?1:0; // rozhodnutí těsně před stanicí
+  const cap=tr.sk?VMAX:Math.min(VMAX,Math.sqrt(2*ACC*rem)+VMIN);
   tr.v=Math.max(VMIN,Math.min(cap,(tr.v||0)+ACC*dt));
   tr.t+=tr.v*dt/D;
 }
@@ -673,12 +713,26 @@ function draw(){
   S.stations.forEach((s,id)=>{
     const [x,y]=pos(s);
     const sl=S.lines[S.sel];
+    // animace vzniku stanice: šedá vlna se roztahuje od středu ven a mizí, symbol stanice krátce pulsne
+    let pk=1;
+    if(s.sp!==undefined){
+      s.sp+=FDT;
+      if(s.sp>2.2)s.sp=undefined;
+      else{
+        const p=Math.min(1,s.sp/2),e=1-(1-p)*(1-p);
+        ctx.save();ctx.fillStyle=fg;ctx.globalAlpha=.3*Math.pow(1-p,1.4);ctx.beginPath();ctx.arc(x,y,R*(.7+3.9*e),0,7);ctx.fill();
+        ctx.globalAlpha=.35*Math.pow(1-p,1.2);ctx.strokeStyle=fg;ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,R*(.7+3.9*e),0,7);ctx.stroke();ctx.restore();
+        const t=Math.min(1,s.sp/.6);pk=t<.55?.45+.8*(t/.55):1.25-.25*((t-.55)/.45);
+      }
+    }
     // plynule se objevující a mizející podbarvení stanice
     let hc=null;
     if(remReady()&&drag.remId===id)hc='#8a8f98';
     else if(drag&&(drag.from===id||drag.hover===id))hc=sl.c;
     s.hl=(s.hl||0)+((hc?1:0)-(s.hl||0))*Math.min(1,FDT*14);
     if(hc)s.hlc=hc;
+    if(id===0&&TUT&&!TUT.fin&&TUT.seg){try{const g=TUT.seg,pl=route(g.L,g.a,g.b),ph=(performance.now()%1300)/1300;ctx.save();ctx.strokeStyle='#f5b800';ctx.globalAlpha=.3+.6*(1-ph);ctx.lineWidth=8+ph*12;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();pl.forEach((q,k)=>k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]));ctx.stroke();ctx.restore()}catch(e){}}
+    if(TUT&&!TUT.fin&&TUT.hl&&TUT.hl.includes(id)){const ph=(performance.now()%1300)/1300;ctx.save();ctx.strokeStyle='#f5b800';ctx.globalAlpha=1-ph;ctx.lineWidth=4;ctx.beginPath();ctx.arc(x,y,R+6+ph*20,0,7);ctx.stroke();ctx.restore()}
     if(s.hl>.02){
       const hr=R+6+4*s.hl;
       ctx.fillStyle=s.hlc;ctx.globalAlpha=.35*s.hl;ctx.beginPath();ctx.arc(x,y,hr,0,7);ctx.fill();
@@ -686,8 +740,9 @@ function draw(){
       ctx.globalAlpha=1;
     }
     if(s.over>0){ctx.strokeStyle='#e0453a';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x,y,R+5,-Math.PI/2,-Math.PI/2+Math.min(1,s.over/14)*2*Math.PI);ctx.stroke()}
-    ctx.fillStyle=stc;ctx.strokeStyle=fg;ctx.lineWidth=3;shp(s.shape,x,y,R-3);ctx.fill();ctx.stroke();
-    s.pax.slice(0,12).forEach((p,k)=>paxDraw(p,s,k,R+12+(k%4)*11,-8+Math.floor(k/4)*11,x,y,0,4,fg));
+    ctx.fillStyle=stc;ctx.strokeStyle=fg;ctx.lineWidth=3;shp(s.shape,x,y,(R-3)*pk);ctx.fill();ctx.stroke();
+    {const ks=Math.min(2,Math.max(1,Math.pow(1/cam.z,.7))); // při oddálení se cestující u stanic zvětšují (ve vozech ne)
+    s.pax.slice(0,12).forEach((p,k)=>paxDraw(p,s,k,R+10+2*ks+(k%4)*11*ks,(-8+Math.floor(k/4)*11)*ks,x,y,0,4*ks,fg))}
   });
   function drawTrains(fg){
   for(const L of S.lines)for(const tr of L.trains){
@@ -741,25 +796,31 @@ function fitCam(dt,snap){
 }
 function loop(t){
   const dt=Math.min(.05,(t-last)/1000||0);last=t;FDT=dt;
-  if(speed>0&&!S.over&&!S.reward&&!inMenu)update(dt*MULT[speed]);
+  // při pauze se čas nehýbe (dt=0), ale logika úprav sítě dál doběhne (mizení linek, duchové úseky, ...)
+  if(!S.over&&!S.reward&&!inMenu)update(speed>0?dt*MULT[speed]:0);
+  if(TUT&&!inMenu)tutTick(dt);
   if(!inMenu)fitCam(dt);
   draw();requestAnimationFrame(loop);
 }
 // --- jazyky ---
 const I18N={
   en:{title:'OpenMetro - Web browser metro game',menu:'Menu',again:'Play again',hint:'Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.',
+    tutorial:'Tutorial',tutSkip:'Skip',tutDone:'Tutorial complete! You know the basics. Good luck!',
+    tut:['Drag from one station to another to build a line.','A new station appeared. Drag from the end station of your line to extend it.','Drag a train from the left panel onto your line. A train can run in either direction – the arrow shows which, and it depends on which side of the line your cursor is on when you drop it.','Passengers want to reach the station with their shape. Let your trains deliver 3 passengers.','Insert a stop: drag from the middle of your line to the new station.','Remove a station: drag from the end of your line – or from a link between two stations – onto the highlighted station and release. (Do it again any time you want to drop a stop.)','Water ahead! Extend the line from its end across the river to the new station – it uses a tunnel.','A new special station appeared! Build a NEW second line (pick an empty circle on the right) from the cross station to the highlighted station, so passengers can change lines.','Move a train from one line to another: grab it on the map and drop it on the second line. Tip: pause with Space to make it easier.','Delete a whole line: click its circle on the right, then click the X.'],
     wk:'Week completed!',newloc:'You received a new locomotive',newShape:'A new station shape appears!',choose:'Choose reward',
     needT:n=>'Not enough tunnels – the connection crosses water ('+n+' missing).',newSt:'New station!',
     over:sc=>'<div class="ot1">Game over</div><div class="ot2"><b>'+sc+'</b><span>Passengers delivered</span></div>',dragTrain:'Drag onto a line',noTrain:'No free trains',
     freeT:(u,t)=>'Free tunnels ('+u+' of '+t+' used)',delLine:'Delete line',dying:'This line is closing down.',extend:'A line can only be extended from its end.',
-    spd:['Pause','Normal speed','Speed 2×','Speed 3×'],rTrain:'Train',rTunnel:'Tunnel',rLine:'New line',
+    spd:['Pause','Normal speed','Speed 2×','Speed 3×'],rTrain:'Train',rTunnel:'Tunnel',rLine:'Line',
     days:['Mo','Tu','We','Th','Fr','Sa','Su'],clock:(s,w,d)=>'Passengers handled: '+s+' · Week '+w+' · Day: '+d,lang:'Language'},
   cs:{title:'OpenMetro - Web browser metro game',menu:'Menu',again:'Hrát znovu',hint:'Vpravo vyber linku a táhni mezi stanicemi. Vlaky táhni z levého panelu na linku.',
+    tutorial:'Tutoriál',tutSkip:'Přeskočit',tutDone:'Tutoriál dokončen! Znáš základy. Hodně štěstí!',
+    tut:['Táhni myší z jedné stanice na druhou a vytvoř linku.','Objevila se nová stanice. Prodluž linku tažením z její koncové stanice.','Přetáhni vlak z levého panelu na svou linku. Vlak může jet oběma směry – ukáže to šipka a záleží, z jaké strany linky je při puštění kurzor.','Cestující chtějí na stanici se svým tvarem. Nech vlaky přepravit 3 cestující.','Vlož zastávku: táhni ze středu linky na novou stanici.','Odebrání stanice: táhni z konce linky – nebo z úseku mezi dvěma stanicemi – na zvýrazněnou stanici a pusť. (Takhle můžeš kdykoli zrušit zastávku.)','Řeka! Prodluž linku z jejího konce přes řeku na novou stanici – spotřebuje to tunel.','Objevila se nová speciální stanice! Vytvoř NOVOU druhou linku (vyber prázdné kolečko vpravo) z křížku na zvýrazněnou stanici, aby mohli cestující přestupovat.','Přehoď vlak z jedné linky na druhou: chyť ho na mapě a pusť na druhou linku. Tip: pauznutí mezerníkem to usnadní.','Smazání celé linky: klikni vpravo na její kolečko a pak na X.'],
     wk:'Týden dokončen!',newloc:'Získal jsi novou lokomotivu',newShape:'Objevuje se nový tvar stanice!',choose:'Vyber odměnu',
     needT:n=>'Nemáš dost tunelů – spojení vede přes vodu (chybí '+n+').',newSt:'Nová stanice!',
     over:sc=>'<div class="ot1">Konec hry</div><div class="ot2"><b>'+sc+'</b><span>Přepravených cestujících</span></div>',dragTrain:'Přetáhni na linku',noTrain:'Žádné volné vlaky',
     freeT:(u,t)=>'Volné tunely (použito '+u+' z '+t+')',delLine:'Smazat linku',dying:'Linka právě zaniká.',extend:'Linku lze prodloužit jen z jejího konce.',
-    spd:['Pauza','Normální rychlost','Rychlost 2×','Rychlost 3×'],rTrain:'Vlak',rTunnel:'Tunel',rLine:'Nová linka',
+    spd:['Pauza','Normální rychlost','Rychlost 2×','Rychlost 3×'],rTrain:'Vlak',rTunnel:'Tunel',rLine:'Linka',
     days:['Po','Út','St','Čt','Pá','So','Ne'],clock:(s,w,d)=>'Přepravení cestující: '+s+' · Týden '+w+' · Den: '+d,lang:'Jazyk'}
 };
 let LANG='en';
@@ -774,10 +835,10 @@ function ui(){
   const lf=document.getElementById('left'),rt=document.getElementById('right');
   lf.innerHTML='';rt.innerHTML='';
   {
-    const d=document.createElement('div');d.className='tr'+(S.pool>0?'':' empty');d.title=S.pool>0?tr_('dragTrain'):tr_('noTrain');
+    const d=document.createElement('div');d.className='tr'+(S.pool>0?'':' empty')+(TUT&&!TUT.fin&&TUT.step===2?' tutp':'');d.title=S.pool>0?tr_('dragTrain'):tr_('noTrain');
     d.innerHTML=TRAIN_SVG+'<b>'+S.pool+'</b>';
     d.addEventListener('pointerdown',e=>{
-      if(S.over||paused||S.pool<1)return;
+      if(S.over||S.pool<1)return;
       const [tx,ty]=toW(e);
       drag={pv:true,tr:null,L:null,from:-1,hover:-1,moved:true,hit:null,x:tx,y:ty};
       cv.setPointerCapture(e.pointerId);e.preventDefault();
@@ -792,6 +853,7 @@ function ui(){
   S.lines.forEach((L,i)=>{
     const b=document.createElement('button');b.className='ln'+(i===S.sel?' on':'');b.style.setProperty('--c',L.c);b.style.color=L.c==='#f5b800'?'#2a2a2a':'#fff';
     const x=i===S.sel&&L.st.length>0;
+    if(x&&TUT&&!TUT.fin&&TUT.step===9)b.classList.add('tutp');
     if(x){b.innerHTML='<svg width="18" height="18" viewBox="0 0 18 18"><path d="M4 4L14 14M14 4L4 14" stroke="#000" stroke-width="3" stroke-linecap="round"/></svg>';b.title=tr_('delLine')}else b.textContent=i+1;
     b.onclick=()=>{if(x)clearLine(L);else{S.sel=i;ui()}};rt.appendChild(b);
   });
@@ -833,7 +895,7 @@ function stAt(e,skip){
 }
 cv.addEventListener('pointerdown',e=>{
   if(e.button!==0)return;
-  if(S.over||paused)return;
+  if(S.over)return;
   const [id,mx,my]=stAt(e,-1),L0=S.lines[S.sel],n0=L0.st.length;
   for(const L of S.lines)for(const tr of L.trains){
     if(tr.t<=0||L.st.length<2||!S.stations[tr.a]||!S.stations[tr.b])continue;
@@ -921,7 +983,9 @@ const rewardBtns=[];
   const b=document.createElement('button');b.className='rb';
   b.innerHTML=svg.replace('width="32" height="32"','width="52" height="52"');
   b.dataset.tk=tk;b.onclick=()=>pickReward(k);rewardBtns.push(b);
-  document.getElementById('rwb').appendChild(b);
+  const w=document.createElement('div');w.className='rbw';
+  const lab=document.createElement('span');lab.className='rbl';b._lab=lab;
+  w.append(b,lab);document.getElementById('rwb').appendChild(w);
 });
 function clockUI(){
   const day=Math.floor(S.t/24),wd=day%7,wk=Math.floor(day/7)+1;
@@ -930,10 +994,11 @@ function clockUI(){
 }
 function clearLine(L){S.pool+=L.trains.length;L.trains=[];L.st=[];L.loop=false;L.dying=false;S.ghosts=S.ghosts.filter(g=>g.L!==L);buildAdj();ui()}
 // úvodní menu a levely (řeky jsou v poměrných souřadnicích 0–1)
-let inMenu=true;
+let TUT=null,inMenu=true,SANDBOX=false; // sandbox: stanici nelze přeplnit, hra nikdy neskončí
 const LEVELS=[
+  {name:'Sandbox',rivers:[],sandbox:true},
   {name:'Desert',rivers:[]},
-  {name:'Ústí',rivers:[[[1.04,.18],[.95,.176],[.9,.189],[.85,.233],[.8,.269],[.75,.304],[.69,.339],[.625,.361],[.565,.37],[.52,.379],[.48,.401],[.458,.441],[.445,.493],[.448,.564],[.458,.634],[.47,.705],[.475,.775],[.488,.846],[.515,.916],[.545,.969],[.565,1],[.58,1.05]]]},
+  {name:'Ústí',rivers:[[[3.5,.26],[1.04,.18],[.95,.176],[.9,.189],[.85,.233],[.8,.269],[.75,.304],[.69,.339],[.625,.361],[.565,.37],[.52,.379],[.48,.401],[.458,.441],[.445,.493],[.448,.564],[.458,.634],[.47,.705],[.475,.775],[.488,.846],[.515,.916],[.545,.969],[.565,1],[.58,1.05],[.60,1.6],[.63,2.6]]]},
   {name:'Praha',rivers:[[[0.377,-2.034],[0.371,-0.246],[0.358,-0.147],[0.341,-0.046],[0.337,0.011],[0.341,0.060],[0.363,0.129],[0.356,0.167],[0.350,0.204],[0.371,0.239],[0.415,0.254],[0.466,0.267],[0.518,0.276],[0.570,0.267],[0.617,0.264],[0.661,0.297],[0.682,0.351],[0.665,0.404],[0.622,0.444],[0.561,0.461],[0.501,0.471],[0.453,0.492],[0.428,0.517],[0.418,0.559],[0.420,0.601],[0.430,0.651],[0.440,0.692],[0.430,0.734],[0.432,0.776],[0.436,0.826],[0.425,0.867],[0.406,0.926],[0.390,0.967],[0.380,1.043],[0.371,2.200]]]},
   {name:'Brno',rw:18,rivers:[[[0.065,-0.336],[0.070,0.017],[0.081,0.084],[0.108,0.117],[0.151,0.138],[0.178,0.159],[0.183,0.180],[0.194,0.214],[0.208,0.247],[0.224,0.268],[0.232,0.294],[0.235,0.323],[0.243,0.340],[0.254,0.357],[0.259,0.378],[0.258,0.411],[0.264,0.453],[0.264,0.495],[0.270,0.537],[0.281,0.570],[0.300,0.600],[0.324,0.615],[0.351,0.617],[0.378,0.611],[0.410,0.594],[0.434,0.585],[0.453,0.586],[0.472,0.600],[0.496,0.625],[0.518,0.654],[0.542,0.688],[0.561,0.726],[0.575,0.763],[0.580,0.805],[0.583,0.847],[0.586,0.889],[0.594,0.931],[0.603,0.971],[0.607,1.049],[0.610,1.426]]]},
   {name:'České Budějovice',rw:18,rivers:[[[0.267,-0.940],[0.276,-0.235],[0.282,0.049],[0.297,0.074],[0.312,0.110],[0.328,0.157],[0.339,0.196],[0.340,0.235],[0.331,0.274],[0.325,0.301],[0.328,0.329],[0.346,0.348],[0.361,0.364],[0.370,0.399],[0.379,0.435],[0.394,0.462],[0.413,0.489],[0.413,0.532],[0.394,0.564],[0.373,0.619],[0.364,0.642],[0.334,0.689],[0.303,0.720],[0.288,0.760],[0.291,0.791],[0.316,0.822],[0.346,0.842],[0.364,0.861],[0.367,0.885],[0.349,0.908],[0.346,0.948],[0.349,0.971],[0.343,1.000],[0.340,1.331],[0.340,1.879]],[[0.413,0.489],[0.443,0.501],[0.473,0.521],[0.482,0.564],[0.482,0.626],[0.479,0.689],[0.482,0.728],[0.504,0.791],[0.534,0.846],[0.558,0.885],[0.573,0.924],[0.575,0.971],[0.576,1.331],[0.576,1.879]]]},
@@ -944,39 +1009,110 @@ function drawPreview(c,lv){
   x.clearRect(0,0,w,h);x.strokeStyle=wc;x.lineWidth=w*.09*((lv.rw||44)/44);x.lineCap='butt';x.lineJoin='round';
   for(const r of lv.rivers){const pts=r.p||r;x.lineWidth=w*.09*((r.w||lv.rw||44)/44);x.lineCap=r.w?'round':'butt';x.beginPath();pts.forEach((p,k)=>x[k?'lineTo':'moveTo'](p[0]*w,p[1]*h));x.stroke()}
 }
-const lvCanvases=[];
+const lvCanvases=[];let tutCanvas=null;
 function buildMenu(){
   const box=document.getElementById('mlv');
   {const lg=document.getElementById('lang');lg.innerHTML='<span id="langt"></span>';
    [['en','English'],['cs','Čeština']].forEach(([l,n])=>{const b=document.createElement('button');b.dataset.l=l;b.textContent=n;b.onclick=()=>setLang(l);lg.appendChild(b)})}
   LEVELS.forEach((lv,i)=>{
-    const b=document.createElement('button');b.className='lv';
+    const b=document.createElement('button');b.className='lv'+(lv.sandbox?' sb':'');
     const c=document.createElement('canvas');c.width=300;c.height=300;
     const s=document.createElement('span');s.textContent=lv.name;
     b.append(c,s);b.onclick=()=>startLevel(i);box.appendChild(b);lvCanvases.push(c);
   });
+  {const b=document.createElement('button');b.className='lv tut';
+   const c=document.createElement('canvas');c.width=300;c.height=300;tutCanvas=c;
+   const sp=document.createElement('span');sp.id='tutLbl';
+   b.append(c,sp);b.onclick=startTutorial;document.getElementById('mtu').appendChild(b)}
 }
 function applyLang(){
   document.documentElement.lang=LANG;document.title=tr_('title');
   const set=(id,k)=>{const e=document.getElementById(id);if(e)e.textContent=tr_(k)};
   set('mb','menu');set('rm','menu');set('rs','again');set('rwt','wk');set('rwn','newloc');set('rws','choose');
-  rewardBtns.forEach(b=>{const t=tr_(b.dataset.tk);b.title=t;b.setAttribute('aria-label',t)});
+  rewardBtns.forEach(b=>{const t=tr_(b.dataset.tk);b.title=t;b.setAttribute('aria-label',t);if(b._lab)b._lab.textContent=t});
   dayEls.forEach((el,i)=>el.textContent=tr_('days')[i]);
   spdEls.forEach((b,n)=>b.title=tr_('spd')[n]);
   document.querySelectorAll('#lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LANG));
   const lt=document.getElementById('langt');if(lt)lt.textContent=tr_('lang');
+  const tl=document.getElementById('tutLbl');if(tl)tl.textContent=tr_('tutorial');
+  if(TUT)tutRender();
   if(S.over)document.getElementById('ot').innerHTML=tr_('over',S.score);
   if(!S.over&&(!document.getElementById('msg').textContent||document.getElementById('msg').dataset.def))
     {const m=document.getElementById('msg');m.textContent=tr_('hint');m.dataset.def='1'}
   clockUI();ui();
 }
 function setLang(l){LANG=l;try{localStorage.setItem('om_lang',l)}catch(e){}applyLang()}
+function drawTutIcon(){
+  const c=tutCanvas;if(!c)return;const x=c.getContext('2d'),fg=getComputedStyle(document.documentElement).getPropertyValue('--fg').trim();
+  x.clearRect(0,0,c.width,c.height);x.fillStyle=fg;x.font='800 190px system-ui,-apple-system,Segoe UI,sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText('?',c.width/2,c.height/2+10);
+  let dn=false;try{dn=localStorage.getItem('om_tut')==='1'}catch(e){}
+  if(dn){x.fillStyle='#2eaa4a';x.beginPath();x.arc(c.width-50,50,34,0,7);x.fill();x.strokeStyle='#fff';x.lineWidth=9;x.lineCap='round';x.lineJoin='round';x.beginPath();x.moveTo(c.width-66,50);x.lineTo(c.width-54,63);x.lineTo(c.width-34,38);x.stroke()}
+}
+// --- tutoriál ---
+const TUT_RIVER=[[.78,-1.5],[.81,.2],[.78,.8],[.80,2.5]];
+const TUT_STEPS=[
+  {hl:[0,1],done:()=>S.lines.some(L=>L.st.length>=2)},
+  {setup:()=>tutAdd(.55,.66,'s'),hl:[2],done:()=>S.lines.some(L=>L.st.length>=3)},
+  {hl:[],done:()=>S.lines.some(L=>L.trains.length>=2)},
+  {setup:()=>{S.spawnP=.4},hl:[],done:()=>S.score>=3},
+  {setup:()=>tutAdd(.30,.28,'c'),hl:[3],done:()=>S.lines.some(L=>{const i=L.st.indexOf(3);return i>0&&i<L.st.length-1})},
+  {hl:[3],done:()=>S.lines.every(L=>!L.st.includes(3))&&S.lines.some(L=>L.st.length>=2)},
+  {setup:()=>tutAdd(.90,.50,'t'),hl:[4],done:()=>tunnelsUsed()>=1},
+  {setup:()=>{tutAdd(.64,.34,'x');S.stations[0].pax.push({shape:'x'})},hl:[2,5],done:()=>S.lines.some(A=>A.st.includes(5)&&A.st.length>=2&&S.lines.some(B=>B!==A&&B.st.length>=2&&B.st.some(k=>A.st.includes(k))))},
+  {hl:[],done:()=>{const ls=S.lines.filter(L=>L.st.length>=2);return ls.length>=2&&ls.every(L=>L.trains.length>=1)}},
+  {hl:[],done:()=>S.lines.every(L=>L.st.length===0)}
+];
+function tutAdd(fx,fy,shape){S.stations.push({fx,fy,shape,pax:[],over:0,sp:0});buildAdj()}
+function tutEnter(n){
+  TUT.step=n;TUT.okT=0;TUT.idle=0;const st=TUT_STEPS[n];if(st.setup)st.setup();TUT.hl=st.hl;
+  document.getElementById('tut').classList.remove('ok');tutRender();ui();
+}
+function tutRender(){
+  const card=document.getElementById('tut');
+  document.getElementById('msg').style.visibility=TUT?'hidden':'';
+  if(!TUT){card.style.display='none';return}
+  card.style.display='flex';
+  const n=document.getElementById('tutn'),t=document.getElementById('tutt'),b=document.getElementById('tutb');
+  b.innerHTML='';
+  if(TUT.fin){
+    n.textContent='✓';t.textContent=tr_('tutDone');
+    const m=document.createElement('button');m.textContent=tr_('menu');m.onclick=openMenu;
+    b.append(m);
+  }else{
+    n.textContent=(TUT.step+1)+'/'+(TUT_STEPS.length+1);t.textContent=tutText();
+    const sk=document.createElement('button');sk.textContent=tr_('tutSkip');sk.onclick=openMenu;b.appendChild(sk);
+  }
+}
+function tutText(){return tr_('tut')[TUT.step]+(TUT.step===3?' ('+Math.min(3,S.score)+'/3)':'')}
+function tutTick(dt){
+  if(TUT.fin)return;
+  const t=document.getElementById('tutt'),tx=tutText();if(t.textContent!==tx)t.textContent=tx;
+  if(TUT.step===1&&TUT.okT<=0){const L=S.lines.find(L=>L.st.length>=2);if(L)TUT.hl=[L.st[L.st.length-1],2]}
+  if(TUT.step===4&&TUT.okT<=0){const L=S.lines.find(L=>L.st.length>=3),T=S.stations[3];TUT.seg=null;if(L){let bd=1e9;for(let i=0;i+1<L.st.length;i++){const a=S.stations[L.st[i]],b=S.stations[L.st[i+1]],d=Math.hypot((a.fx+b.fx)/2-T.fx,(a.fy+b.fy)/2-T.fy);if(d<bd){bd=d;TUT.seg={L,a:L.st[i],b:L.st[i+1]}}}}}else TUT.seg=null;
+  if(TUT.step===6&&TUT.okT<=0){const L=S.lines.find(L=>L.st.length>=2);if(L){const T=S.stations[4],dd=k=>{const q=S.stations[k];return Math.hypot(q.fx-T.fx,q.fy-T.fy)},a=L.st[0],b=L.st[L.st.length-1];TUT.hl=[dd(a)<dd(b)?a:b,4]}}
+  if(TUT.okT>0){
+    TUT.okT-=dt;
+    if(TUT.okT<=0){if(TUT.step+1>=TUT_STEPS.length){TUT.fin=true;try{localStorage.setItem('om_tut','1')}catch(e){}TUT.hl=[];tutRender();ui()}else tutEnter(TUT.step+1)}
+    return;
+  }
+  TUT.idle=(TUT.idle||0)+dt;if(TUT.idle>20){TUT.idle=0;const cd=document.getElementById('tut');cd.classList.add('tutp');setTimeout(()=>cd.classList.remove('tutp'),3000)}
+  if(TUT_STEPS[TUT.step].done()){TUT.okT=.9;document.getElementById('tut').classList.add('ok')}
+}
+function startTutorial(){
+  SANDBOX=true;RIVERS=[TUT_RIVER];RW=30;cam.x=0;cam.y=0;cam.z=1;drag=null;TUT=null;
+  reset();
+  S.stations=[{fx:.25,fy:.62,shape:'c',pax:[],over:0},{fx:.42,fy:.36,shape:'t',pax:[],over:0}];
+  S.pool=2;S.tunnels=1;S.sel=0;buildAdj();fitCam(0,true);
+  document.getElementById('menu').style.display='none';inMenu=false;setSpeed(1);
+  TUT={step:0,okT:0,hl:[0,1],fin:false};tutEnter(0);
+}
 function openMenu(){
-  inMenu=true;lvCanvases.forEach((c,i)=>drawPreview(c,LEVELS[i]));
+  TUT=null;tutRender();
+  inMenu=true;lvCanvases.forEach((c,i)=>drawPreview(c,LEVELS[i]));drawTutIcon();
   document.getElementById('menu').style.display='flex';
 }
 function startLevel(i){
-  RIVERS=LEVELS[i].rivers;RW=LEVELS[i].rw||44;cam.x=0;cam.y=0;cam.z=1;drag=null;
+  TUT=null;tutRender();SANDBOX=!!LEVELS[i].sandbox;RIVERS=LEVELS[i].rivers;RW=LEVELS[i].rw||44;cam.x=0;cam.y=0;cam.z=1;drag=null;
   reset();fitCam(0,true);document.getElementById('menu').style.display='none';inMenu=false;setSpeed(1);
 }
 document.getElementById('mb').onclick=openMenu;
