@@ -1,4 +1,3 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="cs"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -133,7 +132,7 @@ button.ln.tutp{border-radius:50%}
 <div id="msg" data-def="1">Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.</div>
 <div id="over"><div id="ot"></div><div id="ob"><button id="rs">Hrát znovu</button><button id="rm">Menu</button></div></div>
 <div id="rw"><div id="rwc"><div id="rwt">Week completed!</div><div id="rwn">You received a new locomotive</div><div id="rws">Choose reward</div><div id="rwb"></div></div></div>
-<div id="ver">v0.83</div>
+<div id="ver">v0.84</div>
 <div id="credit">Made by BLK in Czech Republic - 2026</div>
 <div id="toast"></div><div id="acc"></div>
 <div id="menu"><button id="acb"></button><div id="mt">OpenMetro</div><div id="carw"><button class="ca" id="cl" aria-label="‹">‹</button><div id="car"><div id="track"></div></div><button class="ca" id="cr" aria-label="›">›</button></div><div id="lbw"><div id="lbt"></div><div id="lb"></div></div><div id="lang"></div></div>
@@ -850,7 +849,7 @@ const I18N={
     saveNick:'Save nickname',nickSaved:'Nickname saved.',login:'Log in',register:'Create account',email:'E-mail',password:'Password (min. 6 characters)',nick:'Nickname (2–20 characters)',noAcc:'No account yet? Create one',haveAcc:'Already have an account? Log in',forgot:'Forgot password?',
     resetSent:'Password reset e-mail sent (check spam too).',resetNeed:'Enter your e-mail first.',logout:'Log out',signedAs:'Signed in as',delAcc:'Delete account',delWarn:'This permanently deletes your account and saved progress. Enter your password to confirm.',delBtn:'Delete permanently',
     privacy:'Privacy',privTxt:'We store your e-mail, nickname and your best score per map so your progress is saved across devices. Your nickname and best scores are shown publicly on the leaderboard (your e-mail is not). Data is kept in Google Firebase. You can delete your account and all data at any time here.',close:'Close',cancel:'Cancel',
-    accNote:'Log in to keep your progress on all devices.',accOff:'Account service is not available right now.',nickBad:'Nickname must have 2–20 characters.',
+    accNote:'Log in to keep your progress on all devices.',accOff:'Account service is not available right now.',nickBad:'Nickname must have 2–20 characters.',nickBlocked:'This nickname is not allowed.',
     aerr:{'auth/invalid-email':'Invalid e-mail address.','auth/missing-password':'Enter your password.','auth/invalid-credential':'Wrong e-mail or password.','auth/user-not-found':'Wrong e-mail or password.','auth/wrong-password':'Wrong e-mail or password.','auth/email-already-in-use':'This e-mail is already registered.','auth/weak-password':'Password must have at least 6 characters.','auth/too-many-requests':'Too many attempts. Try again later.','auth/network-request-failed':'Network error. Check your connection.','auth/requires-recent-login':'Please log in again and retry.',x:'Something went wrong. Try again.'},
     lockedMsg:(g,n)=>'Locked – deliver '+g+' passengers in one run on '+n+'.',lockReq:(g,n)=>'🔒 '+g+' on '+n,bestN:n=>'Best: '+n,unlockMsg:n=>'Map unlocked: '+n+'!',
     tutorial:'Tutorial',tutSkip:'Skip',tutDone:'Tutorial complete! You know the basics. Good luck!',
@@ -867,7 +866,7 @@ const I18N={
     saveNick:'Uložit přezdívku',nickSaved:'Přezdívka uložena.',login:'Přihlásit se',register:'Vytvořit účet',email:'E-mail',password:'Heslo (min. 6 znaků)',nick:'Přezdívka (2–20 znaků)',noAcc:'Nemáš účet? Vytvoř si ho',haveAcc:'Už máš účet? Přihlas se',forgot:'Zapomenuté heslo?',
     resetSent:'E-mail pro obnovu hesla byl odeslán (zkontroluj i spam).',resetNeed:'Nejdřív zadej e-mail.',logout:'Odhlásit se',signedAs:'Přihlášen jako',delAcc:'Smazat účet',delWarn:'Tím trvale smažeš účet i uložený postup. Pro potvrzení zadej heslo.',delBtn:'Smazat navždy',
     privacy:'Ochrana soukromí',privTxt:'Ukládáme tvůj e-mail, přezdívku a nejlepší výsledek na každé mapě, aby se ti postup uložil napříč zařízeními. Přezdívka a nejlepší výsledky jsou veřejně vidět v žebříčku (e-mail ne). Data jsou uložena ve službě Google Firebase. Účet i všechna data můžeš kdykoli smazat tady.',close:'Zavřít',cancel:'Zrušit',
-    accNote:'Přihlas se a postup ti zůstane na všech zařízeních.',accOff:'Služba účtů teď není dostupná.',nickBad:'Přezdívka musí mít 2–20 znaků.',
+    accNote:'Přihlas se a postup ti zůstane na všech zařízeních.',accOff:'Služba účtů teď není dostupná.',nickBad:'Přezdívka musí mít 2–20 znaků.',nickBlocked:'Tato přezdívka není povolená.',
     aerr:{'auth/invalid-email':'Neplatná e-mailová adresa.','auth/missing-password':'Zadej heslo.','auth/invalid-credential':'Špatný e-mail nebo heslo.','auth/user-not-found':'Špatný e-mail nebo heslo.','auth/wrong-password':'Špatný e-mail nebo heslo.','auth/email-already-in-use':'Tento e-mail je už zaregistrovaný.','auth/weak-password':'Heslo musí mít alespoň 6 znaků.','auth/too-many-requests':'Příliš mnoho pokusů. Zkus to později.','auth/network-request-failed':'Chyba sítě. Zkontroluj připojení.','auth/requires-recent-login':'Přihlas se prosím znovu a zkus to ještě jednou.',x:'Něco se nepovedlo. Zkus to znovu.'},
     lockedMsg:(g,n)=>'Zamčeno – odbav '+g+' cestujících v jednom runu na mapě '+n+'.',lockReq:(g,n)=>'🔒 '+g+' na '+n,bestN:n=>'Nejlepší: '+n,unlockMsg:n=>'Mapa odemčena: '+n+'!',
     tutorial:'Tutoriál',tutSkip:'Přeskočit',tutDone:'Tutoriál dokončen! Znáš základy. Hodně štěstí!',
@@ -1068,7 +1067,16 @@ function drawPreview(c,lv){
 }
 const lvCanvases=[],lvEls=[],carItems=[];let selIdx=1;let tutCanvas=null;
 // --- postup hráče, odemykání map ---
-const GOAL=1000,PRIV_MAIL='';
+const GOAL=1000,PRIV_MAIL='',OWNER_MAIL='lukasbilek98@gmail.com';
+// přezdívky: zakázané jsou označení vývojáře/správce (kromě majitele); pravidla ve Firestore hlídají totéž
+function nickBlocked(n,email){
+  if((email||'').toLowerCase()===OWNER_MAIL)return false;
+  const raw=n.toLowerCase(),lt=raw.replace(/0/g,'o').replace(/1/g,'i').replace(/3/g,'e').replace(/4/g,'a').replace(/5/g,'s').replace(/7/g,'t').replace(/@/g,'a').replace(/\$/g,'s');
+  const st=lt.replace(/[^a-z]/g,'');
+  if(/[\[\]{}<>()]/.test(n))return true;
+  if(/(^|[^a-z0-9])dev([^a-z0-9]|$)/.test(raw)||st==='dev'||/dev$/.test(st)||/^DEV/.test(n))return true;
+  return /admin|moderator|developer|staff|official|anthropic|owner|support|gamemaster/.test(st);
+}
 let PROG={best:{}},curLv=-1,progDirty=false,progT=0;
 try{const j=JSON.parse(localStorage.getItem('om_prog')||'{}');if(j&&j.best)PROG.best=j.best}catch(e){}
 function progStore(){try{localStorage.setItem('om_prog',JSON.stringify(PROG))}catch(e){}}
@@ -1259,6 +1267,7 @@ addEventListener('keydown',e=>{
 // --- účet ---
 const AC={user:null,mode:'in',err:'',busy:false,priv:false,email:'',nick:'',note:''};
 function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e}
+function ACC_EMAIL(){return AC.email.trim()}
 function accOpen(){if(!window.OMA){toast(tr_('accOff'));return}AC.mode=AC.user?'user':'in';AC.err='';AC.note='';AC.priv=false;document.getElementById('acc').style.display='flex';accRender()}
 function accClose(){document.getElementById('acc').style.display='none'}
 function accErr(e){const m=tr_('aerr');AC.err=m[e&&e.code]||m.x}
@@ -1277,7 +1286,7 @@ function accRender(){
     card.append(mk(tr_('logout'),()=>accRun(async()=>{await OMA.signOut();PROG={best:{}};progStore();menuRefresh();accClose()})));
     card.querySelector('.pri').style.background='var(--st)';card.querySelector('.pri').style.color='var(--fg)';
     card.append(inp('text',tr_('nick'),AC.nick||AC.user.name,v=>{AC.nick=v},'nickname'));
-    card.append(lnk(tr_('saveNick'),()=>accRun(async()=>{const n=(AC.nick||'').trim();if(n.length<2||n.length>20){AC.err=tr_('nickBad');return}await OMA.setNick(n);AC.nick='';AC.note=tr_('nickSaved')})));
+    card.append(lnk(tr_('saveNick'),()=>accRun(async()=>{const n=(AC.nick||'').trim();if(n.length<2||n.length>20){AC.err=tr_('nickBad');return}if(nickBlocked(n,AC.user.email)){AC.err=tr_('nickBlocked');return}await OMA.setNick(n);AC.nick='';AC.note=tr_('nickSaved')})));
     card.append(lnk(tr_('delAcc'),()=>{AC.mode='del';AC.err='';accRender()}));
   }else if(AC.mode==='del'){
     card.append(el('h2','',tr_('delAcc')),el('div','note',tr_('delWarn')));
@@ -1291,7 +1300,7 @@ function accRender(){
     card.append(inp('email',tr_('email'),AC.email,v=>{AC.email=v},'email'));
     card.append(inp('password',tr_('password'),'',v=>{pw=v},up?'new-password':'current-password'));
     card.append(mk(up?tr_('register'):tr_('login'),()=>accRun(async()=>{
-      if(up){const n=AC.nick.trim();if(n.length<2||n.length>20){AC.err=tr_('nickBad');return}await OMA.signUp(AC.email.trim(),pw,n)}
+      if(up){const n=AC.nick.trim();if(n.length<2||n.length>20){AC.err=tr_('nickBad');return}if(nickBlocked(n,ACC_EMAIL())){AC.err=tr_('nickBlocked');return}await OMA.signUp(AC.email.trim(),pw,n)}
       else await OMA.signIn(AC.email.trim(),pw);
       accClose()})));
     card.append(lnk(up?tr_('haveAcc'):tr_('noAcc'),()=>{AC.mode=up?'in':'up';AC.err='';accRender()}));
@@ -1352,6 +1361,4 @@ onAuthStateChanged(auth,async u=>{
   emit(u,remote);
 });
 </script>
-</body></html>
-
 </body></html>
