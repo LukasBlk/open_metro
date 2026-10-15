@@ -40,7 +40,7 @@ button.ln.on{box-shadow:0 0 0 3px var(--fg)}
 #ob button#rs:hover{background:var(--st);color:var(--fg)}
 #clock{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);right:max(12px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;align-items:flex-end;gap:6px;user-select:none}
 #cinfo{font-weight:600;font-size:13px}
-#crow{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px 14px}
+#crow{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 #days{display:flex;gap:5px}
 .dy{width:30px;height:30px;box-sizing:border-box;border-radius:50%;border:2px solid var(--fg);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:linear-gradient(90deg,var(--bd) var(--p,0%),var(--st) var(--p,0%))}
 .dy.cur{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--fg)}
@@ -59,7 +59,11 @@ button.ln.on{box-shadow:0 0 0 3px var(--fg)}
 .rbw{display:flex;flex-direction:column;align-items:center;gap:8px}
 .rbl{font-size:13px;font-weight:600;opacity:.75}
 .tr.static{cursor:default}
-#mb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:max(12px,env(safe-area-inset-left,0px))}
+#tl{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:max(12px,env(safe-area-inset-left,0px));display:flex;gap:8px;align-items:center}
+.vb{width:40px;height:34px;padding:0;display:flex;align-items:center;justify-content:center}
+.vb svg{display:block}
+#mvm{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:calc(max(12px,env(safe-area-inset-left,0px)) + 48px)}
+#vbm{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);left:max(12px,env(safe-area-inset-left,0px))}
 #menu{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:safe center;gap:14px;padding:16px;box-sizing:border-box;overflow:auto}
 #acb{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:max(12px,env(safe-area-inset-right,0px));font-weight:700;max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:700;z-index:60;max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
@@ -127,15 +131,15 @@ button.ln.tutp{border-radius:50%}
 </style></head><body>
 <canvas id="cv"></canvas>
 <div id="clock"><div id="cinfo"></div><div id="crow"><div id="days"></div><div id="spd"></div></div></div>
-<button id="mb">Menu</button>
+<div id="tl"><button id="mb">Menu</button><button class="vb" id="vbg"></button><button class="vb mu" id="mvg"></button></div>
 <div id="left" class="side"></div><div id="right" class="side"></div>
 <div id="msg" data-def="1">Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.</div>
 <div id="over"><div id="ot"></div><div id="ob"><button id="rs">Hrát znovu</button><button id="rm">Menu</button></div></div>
 <div id="rw"><div id="rwc"><div id="rwt">Week completed!</div><div id="rwn">You received a new locomotive</div><div id="rws">Choose reward</div><div id="rwb"></div></div></div>
-<div id="ver">v0.86</div>
-<div id="credit">Made by BLK in Czech Republic - 2026</div>
+<div id="ver">v0.98</div>
+<div id="credit">Made by Lum1x in Czech Republic - 2026</div>
 <div id="toast"></div><div id="acc"></div>
-<div id="menu"><button id="acb"></button><div id="mt">OpenMetro</div><div id="carw"><button class="ca" id="cl" aria-label="‹">‹</button><div id="car"><div id="track"></div></div><button class="ca" id="cr" aria-label="›">›</button></div><div id="lbw"><div id="lb"></div></div><div id="lang"></div></div>
+<div id="menu"><button class="vb" id="vbm"></button><button class="vb mu" id="mvm"></button><button id="acb"></button><div id="mt">OpenMetro</div><div id="carw"><button class="ca" id="cl" aria-label="‹">‹</button><div id="car"><div id="track"></div></div><button class="ca" id="cr" aria-label="›">›</button></div><div id="lbw"><div id="lb"></div></div><div id="lang"></div></div>
 <div id="tut"><div id="tutn"></div><div id="tutt"></div><div id="tutb"></div></div>
 <script>
 // barvy linek podle pražského metra: A zelená, B žlutá, C červená, D modrá; zbytek vlastní
@@ -270,7 +274,7 @@ function tunnelsUsed(ov,tmp){
 function canChange(L,st,loop){
   const cur=tunnelsUsed(),nu=tunnelsUsed(L,{i:L.i,st,loop});
   if(nu<=S.tunnels||nu<=cur)return true;
-  msg(tr_('needT',nu-S.tunnels));return false;
+  msg(tr_('needT',nu-S.tunnels));SFX.error();return false;
 }
 function remReady(){return !!drag&&drag.remId>=0&&drag.hover!==drag.remId}
 // odebrání stanice z linky
@@ -365,10 +369,10 @@ function move(L,tr,dt){
   }
 }
 function update(dt){
-  progTrack();
+  progTrack();sfxWatch();
   S.t+=dt;
   const wkNow=TUT?0:Math.floor(S.t/168);
-  if(wkNow>S.weeksDone){S.weeksDone=wkNow;S.reward=true;S.pool++;document.getElementById('rwn').innerHTML=tr_('newloc')+(S.weeksDone<=SPECIAL.length?'<br>'+tr_('newShape'):'');ui();document.getElementById('rwb').children[2].style.display=S.lines.length>=MAXL?'none':'';document.getElementById('rw').style.display='flex';return}
+  if(wkNow>S.weeksDone){SFX.week();S.weeksDone=wkNow;S.reward=true;S.pool++;document.getElementById('rwn').innerHTML=tr_('newloc')+(S.weeksDone<=SPECIAL.length?'<br>'+tr_('newShape'):'');ui();document.getElementById('rwb').children[2].style.display=S.lines.length>=MAXL?'none':'';document.getElementById('rw').style.display='flex';return}
   if((S.spawnP-=dt)<=0){S.spawnP=Math.max(1.2,2.6-S.t/150)/(S.weeksDone>=9?1.2:1);if(!TUT||TUT.step>=3)spawnPax()}
   if(!TUT&&(S.spawnS-=dt)<=0){
     // 1. týden: 8 stanic (po 20 s); každý další týden +5 stanic rovnoměrně rozložených přes týden
@@ -381,9 +385,11 @@ function update(dt){
     if(L.trains.some(t=>t.dead))L.trains=L.trains.filter(t=>!t.dead);
     if(L.dying&&!L.trains.length){L.st=[];L.loop=false;L.dying=false;S.ghosts=S.ghosts.filter(g=>g.L!==L);buildAdj();ui()}
   }
+  const onLine=new Set();for(const L of S.lines)for(const k of L.st)onLine.add(S.stations[k]);
   for(const s of S.stations){
+    s.idle=onLine.has(s)?0:(s.idle||0)+dt;
     if(SANDBOX)s.over=0;else if(s.pax.length>=8)s.over+=dt;else s.over=Math.max(0,s.over-dt*2);
-    if(s.over>14&&!S.over){S.over=true;progTrack();progFlush(true);document.getElementById('ot').innerHTML=tr_('over',S.score);document.getElementById('over').style.display='flex'}
+    if(s.over>OVER_T&&!S.over){S.over=true;SFX.over();SFX.duck(.25);progTrack();progFlush(true);document.getElementById('ot').innerHTML=tr_('over',S.score);document.getElementById('over').style.display='flex'}
   }
 }
 function poly(n,a0,x,y,r){ctx.beginPath();for(let i=0;i<n;i++){const a=a0+i*2*Math.PI/n;ctx[i?'lineTo':'moveTo'](x+Math.cos(a)*r,y+Math.sin(a)*r)}ctx.closePath()}
@@ -776,6 +782,8 @@ function draw(){
         const t=Math.min(1,s.sp/.6);pk=t<.55?.45+.8*(t/.55):1.25-.25*((t-.55)/.45);
       }
     }
+    // nepřipojená stanice na sebe po čase upozorní: pravidelně „poskočí" a vyšle vlnu
+    if(s.idle>IDLE_T&&!TUT){const ph=((performance.now()/1000+id*.77)%3.2)/1.1;if(ph<1){const e=1-(1-ph)*(1-ph);ctx.save();ctx.strokeStyle=fg;ctx.lineWidth=3;ctx.globalAlpha=.6*(1-ph);ctx.beginPath();ctx.arc(x,y,R*(1+1.7*e),0,7);ctx.stroke();ctx.restore();pk*=1+.3*Math.sin(ph*Math.PI)}}
     // plynule se objevující a mizející podbarvení stanice
     let hc=null;
     if(remReady()&&drag.remId===id)hc='#8a8f98';
@@ -790,7 +798,7 @@ function draw(){
       ctx.globalAlpha=s.hl;ctx.strokeStyle=s.hlc;ctx.lineWidth=3;ctx.beginPath();ctx.arc(x,y,hr,0,7);ctx.stroke();
       ctx.globalAlpha=1;
     }
-    if(s.over>0){ctx.strokeStyle='#e0453a';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x,y,R+5,-Math.PI/2,-Math.PI/2+Math.min(1,s.over/14)*2*Math.PI);ctx.stroke()}
+    if(s.over>0){ctx.strokeStyle='#e0453a';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x,y,R+5,-Math.PI/2,-Math.PI/2+Math.min(1,s.over/OVER_T)*2*Math.PI);ctx.stroke()}
     ctx.fillStyle=stc;ctx.strokeStyle=fg;ctx.lineWidth=3;shp(s.shape,x,y,(R-3)*pk);ctx.fill();ctx.stroke();
     {const ks=Math.min(2,Math.max(1,Math.pow(1/cam.z,.7))); // při oddálení se cestující u stanic zvětšují (ve vozech ne)
     s.pax.slice(0,12).forEach((p,k)=>paxDraw(p,s,k,R+10+2*ks+(k%4)*11*ks,(-8+Math.floor(k/4)*11)*ks,x,y,0,4*ks,fg))}
@@ -857,7 +865,7 @@ function loop(t){
 const I18N={
   en:{title:'OpenMetro - Web browser metro game',menu:'Menu',again:'Play again',hint:'Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.',
 
-    lbTitle:n=>'TOP 20 – '+n,lbEmpty:'No scores yet – be the first!',lbLoading:'Loading…',lbOff:'Leaderboard is not available right now.',lbLogin:'Log in to get on the leaderboard.',
+    vol:'Sound effects',mus:'Music',lbTitle:n=>'TOP 20 – '+n,lbEmpty:'No scores yet – be the first!',lbLoading:'Loading…',lbOff:'Leaderboard is not available right now.',lbLogin:'Log in to get on the leaderboard.',
     saveNick:'Save nickname',nickSaved:'Nickname saved.',login:'Log in',register:'Create account',email:'E-mail',password:'Password (min. 6 characters)',nick:'Nickname (2–20 characters)',noAcc:'No account yet? Create one',haveAcc:'Already have an account? Log in',forgot:'Forgot password?',
     resetSent:'Password reset e-mail sent (check spam too).',resetNeed:'Enter your e-mail first.',logout:'Log out',signedAs:'Signed in as',delAcc:'Delete account',delWarn:'This permanently deletes your account and saved progress. Enter your password to confirm.',delBtn:'Delete permanently',
     privacy:'Privacy',privTxt:'We store your e-mail, nickname and your best score per map so your progress is saved across devices. Your nickname and best scores are shown publicly on the leaderboard (your e-mail is not). Data is kept in Google Firebase. You can delete your account and all data at any time here.',close:'Close',cancel:'Cancel',
@@ -874,7 +882,7 @@ const I18N={
     days:['Mo','Tu','We','Th','Fr','Sa','Su'],clock:(s,w,d)=>'Passengers handled: '+s+' · Week '+w+' · Day: '+d,lang:'Language'},
   cs:{title:'OpenMetro - Web browser metro game',menu:'Menu',again:'Hrát znovu',hint:'Vpravo vyber linku a táhni mezi stanicemi. Vlaky táhni z levého panelu na linku.',
 
-    lbTitle:n=>'TOP 20 – '+n,lbEmpty:'Zatím žádné výsledky – buď první!',lbLoading:'Načítám…',lbOff:'Žebříček teď není dostupný.',lbLogin:'Přihlas se a zapiš se do žebříčku.',
+    vol:'Zvukové efekty',mus:'Hudba',lbTitle:n=>'TOP 20 – '+n,lbEmpty:'Zatím žádné výsledky – buď první!',lbLoading:'Načítám…',lbOff:'Žebříček teď není dostupný.',lbLogin:'Přihlas se a zapiš se do žebříčku.',
     saveNick:'Uložit přezdívku',nickSaved:'Přezdívka uložena.',login:'Přihlásit se',register:'Vytvořit účet',email:'E-mail',password:'Heslo (min. 6 znaků)',nick:'Přezdívka (2–20 znaků)',noAcc:'Nemáš účet? Vytvoř si ho',haveAcc:'Už máš účet? Přihlas se',forgot:'Zapomenuté heslo?',
     resetSent:'E-mail pro obnovu hesla byl odeslán (zkontroluj i spam).',resetNeed:'Nejdřív zadej e-mail.',logout:'Odhlásit se',signedAs:'Přihlášen jako',delAcc:'Smazat účet',delWarn:'Tím trvale smažeš účet i uložený postup. Pro potvrzení zadej heslo.',delBtn:'Smazat navždy',
     privacy:'Ochrana soukromí',privTxt:'Ukládáme tvůj e-mail, přezdívku a nejlepší výsledek na každé mapě, aby se ti postup uložil napříč zařízeními. Přezdívka a nejlepší výsledky jsou veřejně vidět v žebříčku (e-mail ne). Data jsou uložena ve službě Google Firebase. Účet i všechna data můžeš kdykoli smazat tady.',close:'Zavřít',cancel:'Zrušit',
@@ -1079,7 +1087,7 @@ function drawPreview(c,lv){
 }
 const lvCanvases=[],lvEls=[],carItems=[];let selIdx=1;let tutCanvas=null;
 // --- postup hráče, odemykání map ---
-const GOAL=1000,PRIV_MAIL='',OWNER_MAIL='lukasbilek98@gmail.com';
+const OVER_T=20,IDLE_T=10,GOAL=1000,PRIV_MAIL='',OWNER_MAIL='lukasbilek98@gmail.com';
 // přezdívky: zakázané jsou označení vývojáře/správce (kromě majitele); pravidla ve Firestore hlídají totéž
 function nickBlocked(n,email){
   if((email||'').toLowerCase()===OWNER_MAIL)return false;
@@ -1101,7 +1109,7 @@ function progTrack(){
   const id=LEVELS[curLv].id;if(S.score<=(PROG.best[id]||0))return;
   const nx=LEVELS[curLv+1],was=nx?unlocked(curLv+1):true;
   PROG.best[id]=S.score;progDirty=true;
-  if(nx&&!was&&unlocked(curLv+1)){toast(tr_('unlockMsg',nx.name),5000);progFlush(true)}
+  if(nx&&!was&&unlocked(curLv+1)){toast(tr_('unlockMsg',nx.name),5000);SFX.unlock();progFlush(true)}
   else if(performance.now()-progT>15000){progT=performance.now();progFlush()}
 }
 let toastT=0;
@@ -1150,6 +1158,7 @@ function applyLang(){
   if(S.over)document.getElementById('ot').innerHTML=tr_('over',S.score);
   if(!S.over&&(!document.getElementById('msg').textContent||document.getElementById('msg').dataset.def))
     {const m=document.getElementById('msg');m.textContent=tr_('hint');m.dataset.def='1'}
+  if(typeof vbRefresh==='function')vbRefresh();
   menuRefresh();if(typeof accRender==='function')accRender();if(typeof lbShow==='function'&&carItems.length&&inMenu){lbShow()}
   clockUI();ui();
 }
@@ -1220,13 +1229,13 @@ function startTutorial(){
 }
 function openMenu(){
   TUT=null;tutRender();
-  progFlush(true);curLv=-1;
+  progFlush(true);curLv=-1;SFX.setIntensity(0);SFX.duck(1);
   inMenu=true;menuRefresh();lvCanvases.forEach((c,i)=>drawPreview(c,LEVELS[i]));drawTutIcon();
   document.getElementById('menu').style.display='flex';
   carSel(selIdx);
 }
 function startLevel(i){
-  if(!unlocked(i))return;curLv=i;
+  if(!unlocked(i))return;curLv=i;SFX.duck(1);
   TUT=null;tutRender();SANDBOX=!!LEVELS[i].sandbox;RIVERS=LEVELS[i].rivers;RW=LEVELS[i].rw||44;cam.x=0;cam.y=0;cam.z=1;drag=null;
   reset();fitCam(0,true);document.getElementById('menu').style.display='none';inMenu=false;setSpeed(1);
 }
@@ -1275,6 +1284,143 @@ addEventListener('keydown',e=>{
   else if(e.key==='ArrowRight'){carSel(selIdx+1);e.preventDefault()}
   else if(e.key==='Enter'){carActivate(selIdx);e.preventDefault()}
 });
+// --- zvukové efekty (generované přes Web Audio, bez souborů) ---
+const SFX=(()=>{
+  const LV=[0,.35,.7,1];let lv=2,ctx=null,master=null,last={};
+  try{const v=parseInt(localStorage.getItem('om_vol'));if(v>=0&&v<LV.length)lv=v}catch(e){}
+  const PENTA=[523.25,587.33,659.25,783.99,880,1046.5];
+  let mus=null,echoIn=null;
+  function base(){
+    if(!ctx){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return false;ctx=new AC();
+      master=ctx.createGain();mus=ctx.createGain();mus.gain.value=0;
+      const cp=ctx.createDynamicsCompressor();master.connect(cp);mus.connect(cp);cp.connect(ctx.destination);
+      // ozvěna pro hudební tóny
+      echoIn=ctx.createGain();const dl=ctx.createDelay(1),fb=ctx.createGain(),lp=ctx.createBiquadFilter(),wet=ctx.createGain();
+      dl.delayTime.value=.46;fb.gain.value=.4;lp.type='lowpass';lp.frequency.value=2200;wet.gain.value=.55;
+      echoIn.connect(dl);dl.connect(lp);lp.connect(fb);fb.connect(dl);lp.connect(wet);wet.connect(mus);
+    }catch(e){ctx=null;return false}}
+    if(ctx.state==='suspended')ctx.resume().catch(()=>{});
+    return true;
+  }
+  function ensure(){
+    if(!LV[lv]||!base())return false;
+    master.gain.value=LV[lv]*.55;
+    return true;
+  }
+  function ok(name,gap){const n=performance.now();if(last[name]&&n-last[name]<gap)return false;last[name]=n;return true}
+  // jeden tón: výška, délka, typ vlny, hlasitost, zpoždění, klouzání výšky
+  function tone(f,d,type,vol,delay=0,to=null){
+    const t=ctx.currentTime+delay,o=ctx.createOscillator(),g=ctx.createGain();
+    o.type=type;o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+d);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.006);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    o.connect(g);g.connect(master);o.start(t);o.stop(t+d+.03);
+  }
+  const play=(name,gap,fn)=>{if(!ensure()||!ok(name,gap))return;try{fn()}catch(e){}};
+  const api={
+    level:()=>lv,
+    cycle(){lv=(lv+1)%LV.length;try{localStorage.setItem('om_vol',lv)}catch(e){}api.onChange&&api.onChange(lv)},
+    click(){play('click',40,()=>tone(880,.05,'sine',.16,0,620))},
+    connect(){play('conn',80,()=>{tone(523.25,.14,'sine',.2);tone(659.25,.2,'sine',.2,.07)})},
+    disconnect(){play('disc',80,()=>{tone(659.25,.12,'sine',.18);tone(440,.2,'sine',.18,.07)})},
+    train(){play('train',80,()=>{tone(196,.16,'triangle',.3,0,130);tone(392,.08,'sine',.12,.02)})},
+    deliver(n){play('deliver',65,()=>{const f=PENTA[Math.floor(Math.random()*PENTA.length)];tone(f,.22,'sine',.11);if(n>1)tone(f*1.5,.2,'sine',.06,.03)})},
+    station(){play('station',150,()=>{tone(300,.35,'sine',.16,0,420);tone(150,.35,'sine',.1)})},
+    week(){play('week',500,()=>{[523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,.35,'sine',.2,i*.09))})},
+    unlock(){play('unlock',500,()=>{[523.25,659.25,783.99,1046.5,1318.5].forEach((f,i)=>tone(f,.4,'triangle',.18,i*.08))})},
+    over(){play('over',800,()=>{[440,392,330,262].forEach((f,i)=>tone(f,.6,'triangle',.2,i*.22))})},
+    alarm(k){play('alarm',350,()=>{if(k===1){tone(880,.13,'square',.09);tone(660,.16,'square',.09,.15)}else{[988,988,988].forEach((f,i)=>tone(f,.1,'square',.1,i*.13))}})},
+    error(){play('error',250,()=>tone(130,.16,'square',.1,0,95))}
+  };
+
+  // --- ambientní hudba: generovaná, pomalé akordy + řídké tóny pentatoniky s ozvěnou ---
+  const MLV=[0,.35,.7,1];let ml=2,mTimer=0,nextChord=0,chordI=0,nextPl=0,inten=0,dk=1,prevIdx=4;
+  try{const v=parseInt(localStorage.getItem('om_mus'));if(v>=0&&v<MLV.length)ml=v}catch(e){}
+  const CH=[[48,55,59,64],[45,55,60,64],[41,57,60,64],[43,59,62,64]],ROOT=[36,33,29,31];
+  const SC=[60,62,64,67,69,72,74,76,79,81,84];
+  const mtof=m=>440*Math.pow(2,(m-69)/12);
+  function padVoice(m,t,len,vol){
+    const f=ctx.createBiquadFilter();f.type='lowpass';f.frequency.value=650+inten*800;
+    const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+3.2);g.gain.setValueAtTime(vol,t+len-3.6);g.gain.linearRampToValueAtTime(0,t+len);
+    f.connect(g);g.connect(mus);
+    [-5,5].forEach(d=>{const o=ctx.createOscillator();o.type='triangle';o.frequency.value=mtof(m);o.detune.value=d;o.connect(f);o.start(t);o.stop(t+len+.1)});
+  }
+  function pluck(m,t,vol){
+    const g=ctx.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.012);g.gain.exponentialRampToValueAtTime(.0001,t+2.4);
+    let out=g;
+    if(ctx.createStereoPanner){const pn=ctx.createStereoPanner();pn.pan.value=Math.random()*1.2-.6;g.connect(pn);out=pn}
+    out.connect(mus);out.connect(echoIn);
+    [[1,'sine',1],[2,'sine',.22]].forEach(([k,ty,a])=>{const o=ctx.createOscillator(),og=ctx.createGain();o.type=ty;o.frequency.value=mtof(m)*k;og.gain.value=a;o.connect(og);og.connect(g);o.start(t);o.stop(t+2.5)});
+  }
+  function sched(){
+    if(!ctx||ctx.state!=='running'||!MLV[ml])return;
+    const now=ctx.currentTime;
+    while(nextChord<now+1.5){
+      const c=CH[chordI%4];c.forEach(m=>padVoice(m,nextChord,16,.02));
+      if(inten>.25)padVoice(ROOT[chordI%4],nextChord,16,.035*inten);
+      if(inten>.55)padVoice(c[2]+24,nextChord,16,.014*inten);
+      chordI++;nextChord+=12;
+    }
+    while(nextPl<now+1.5){
+      const step=[-2,-1,1,2][Math.floor(Math.random()*4)];prevIdx=Math.max(0,Math.min(SC.length-1,prevIdx+step));
+      if(Math.random()<.16){let i=Math.max(0,Math.min(SC.length-4,prevIdx));for(let k=0;k<4;k++)pluck(SC[i+k],nextPl+k*.3,.06);nextPl+=1.4}
+      else pluck(SC[prevIdx],nextPl,.075);
+      nextPl+=(.9+Math.random()*1.8)*(1.7-inten*1.1);
+    }
+  }
+  function musApply(){
+    if(MLV[ml]&&base()){
+      mus.gain.setTargetAtTime(MLV[ml]*.8*dk,ctx.currentTime,.5);
+      if(!mTimer){nextChord=ctx.currentTime+.2;nextPl=ctx.currentTime+2.5;mTimer=setInterval(sched,250);sched()}
+    }else{
+      if(ctx&&mus)mus.gain.setTargetAtTime(0,ctx.currentTime,.3);
+      if(mTimer){clearInterval(mTimer);mTimer=0}
+    }
+  }
+  document.addEventListener('visibilitychange',()=>{if(!ctx)return;if(document.hidden)ctx.suspend().catch(()=>{});else if(MLV[ml]||LV[lv])ctx.resume().catch(()=>{})});
+  api.mlevel=()=>ml;
+  api.mcycle=()=>{ml=(ml+1)%MLV.length;try{localStorage.setItem('om_mus',ml)}catch(e){}musApply();api.onChange&&api.onChange()};
+  api.setIntensity=v=>{inten=Math.max(0,Math.min(1,v))};
+  api.duck=f=>{if(f===dk)return;dk=f;if(ctx&&mus&&MLV[ml])mus.gain.setTargetAtTime(MLV[ml]*.8*dk,ctx.currentTime,.35)};
+  api.wake=()=>{ensure();musApply()};
+  api._dbg=()=>({ctx,mus});
+  return api;
+})();
+function vbIcon(l){
+  const w=[0,1,2,3].map(i=>i<l?'<path d="'+['M15.5 9.5a3.5 3.5 0 0 1 0 5','M17.8 7.5a6.5 6.5 0 0 1 0 9','M20 5.5a9.5 9.5 0 0 1 0 13'][i-0]+'"/>':'').join('');
+  return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor"/>'+(l===0?'<path d="M16 9.5l5 5M21 9.5l-5 5"/>':w)+'</svg>';
+}
+function muIcon(l){
+  return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:'+(l===0?.55:.4+l*.2)+'"><path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2.4" fill="currentColor"/><circle cx="17" cy="16" r="2.4" fill="currentColor"/>'+(l===0?'<path d="M3 3l18 18"/>':'')+'</svg>';
+}
+function vbRefresh(){document.querySelectorAll('.vb').forEach(b=>{const m=b.classList.contains('mu');b.innerHTML=m?muIcon(SFX.mlevel()):vbIcon(SFX.level());const t=tr_(m?'mus':'vol');b.title=t;b.setAttribute('aria-label',t)})}
+SFX.onChange=vbRefresh;
+document.querySelectorAll('.vb').forEach(b=>b.onclick=()=>{if(b.classList.contains('mu'))SFX.mcycle();else SFX.cycle();SFX.click()});
+addEventListener('pointerdown',()=>SFX.wake(),{capture:true});
+addEventListener('keydown',()=>SFX.wake(),{capture:true});
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('button:not(.vb)'))SFX.click()},true);
+// události hry -> zvuky (porovnává se stav mezi snímky; první snímek nové hry je tichý)
+function sfxWatch(){
+  const sc=S.score,ns=S.stations.length,nl=S.lines.reduce((a,l)=>a+l.st.length,0),nt=S.lines.reduce((a,l)=>a+l.trains.length,0);
+  if(S._ps!==undefined){
+    if(ns>S._pn)SFX.station();
+    if(nl>S._pl)SFX.connect();else if(nl<S._pl)SFX.disconnect();
+    if(nt>S._pt)SFX.train();
+  }
+  if(!SANDBOX&&!TUT&&!S.over){
+    let urgent=false;
+    for(const st of S.stations){
+      if(st.pax.length>=8&&!st._al){st._al=1;SFX.alarm(1)}
+      else if(st._al===1&&st.over>OVER_T/2){st._al=2;S._alT=performance.now();SFX.alarm(2)}
+      else if(st.pax.length<8&&st.over<1)st._al=0;
+      if(st._al===2&&st.pax.length>=8)urgent=true;
+    }
+    // kritická fáze: pípá dál, dokud je stanice přeplněná (při pauze mlčí)
+    SFX.duck(urgent?.5:1);
+    if(urgent&&!paused&&performance.now()-(S._alT||0)>1100){S._alT=performance.now();SFX.alarm(2)}
+  }
+  SFX.setIntensity(Math.min(1,nl/26));
+  S._ps=sc;S._pn=ns;S._pl=nl;S._pt=nt;
+}
 // --- účet ---
 const AC={user:null,mode:'in',err:'',busy:false,priv:false,email:'',nick:'',note:''};
 function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e}
