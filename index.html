@@ -114,7 +114,7 @@ button.ln.tutp{border-radius:50%}
 <div id="msg" data-def="1">Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.</div>
 <div id="over"><div id="ot"></div><div id="ob"><button id="rs">Hrát znovu</button><button id="rm">Menu</button></div></div>
 <div id="rw"><div id="rwc"><div id="rwt">Week completed!</div><div id="rwn">You received a new locomotive</div><div id="rws">Choose reward</div><div id="rwb"></div></div></div>
-<div id="ver">v0.79</div>
+<div id="ver">v0.80</div>
 <div id="credit">Made by BLK in Czech Republic - 2026</div>
 <div id="toast"></div><div id="acc"></div>
 <div id="menu"><button id="acb"></button><div id="mt">OpenMetro</div><div id="mlv"></div><div id="mtu"></div><div id="lang"></div></div>
@@ -827,7 +827,7 @@ function loop(t){
 const I18N={
   en:{title:'OpenMetro - Web browser metro game',menu:'Menu',again:'Play again',hint:'Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.',
 
-    login:'Log in',register:'Create account',email:'E-mail',password:'Password (min. 6 characters)',nick:'Nickname (2–20 characters)',noAcc:'No account yet? Create one',haveAcc:'Already have an account? Log in',forgot:'Forgot password?',
+    saveNick:'Save nickname',nickSaved:'Nickname saved.',login:'Log in',register:'Create account',email:'E-mail',password:'Password (min. 6 characters)',nick:'Nickname (2–20 characters)',noAcc:'No account yet? Create one',haveAcc:'Already have an account? Log in',forgot:'Forgot password?',
     resetSent:'Password reset e-mail sent (check spam too).',resetNeed:'Enter your e-mail first.',logout:'Log out',signedAs:'Signed in as',delAcc:'Delete account',delWarn:'This permanently deletes your account and saved progress. Enter your password to confirm.',delBtn:'Delete permanently',
     privacy:'Privacy',privTxt:'We store your e-mail, nickname and your best score per map so your progress is saved across devices. Data is kept in Google Firebase. You can delete your account and all data at any time here.',close:'Close',cancel:'Cancel',
     accNote:'Log in to keep your progress on all devices.',accOff:'Account service is not available right now.',nickBad:'Nickname must have 2–20 characters.',
@@ -843,7 +843,7 @@ const I18N={
     days:['Mo','Tu','We','Th','Fr','Sa','Su'],clock:(s,w,d)=>'Passengers handled: '+s+' · Week '+w+' · Day: '+d,lang:'Language'},
   cs:{title:'OpenMetro - Web browser metro game',menu:'Menu',again:'Hrát znovu',hint:'Vpravo vyber linku a táhni mezi stanicemi. Vlaky táhni z levého panelu na linku.',
 
-    login:'Přihlásit se',register:'Vytvořit účet',email:'E-mail',password:'Heslo (min. 6 znaků)',nick:'Přezdívka (2–20 znaků)',noAcc:'Nemáš účet? Vytvoř si ho',haveAcc:'Už máš účet? Přihlas se',forgot:'Zapomenuté heslo?',
+    saveNick:'Uložit přezdívku',nickSaved:'Přezdívka uložena.',login:'Přihlásit se',register:'Vytvořit účet',email:'E-mail',password:'Heslo (min. 6 znaků)',nick:'Přezdívka (2–20 znaků)',noAcc:'Nemáš účet? Vytvoř si ho',haveAcc:'Už máš účet? Přihlas se',forgot:'Zapomenuté heslo?',
     resetSent:'E-mail pro obnovu hesla byl odeslán (zkontroluj i spam).',resetNeed:'Nejdřív zadej e-mail.',logout:'Odhlásit se',signedAs:'Přihlášen jako',delAcc:'Smazat účet',delWarn:'Tím trvale smažeš účet i uložený postup. Pro potvrzení zadej heslo.',delBtn:'Smazat navždy',
     privacy:'Ochrana soukromí',privTxt:'Ukládáme tvůj e-mail, přezdívku a nejlepší výsledek na každé mapě, aby se ti postup uložil napříč zařízeními. Data jsou uložena ve službě Google Firebase. Účet i všechna data můžeš kdykoli smazat tady.',close:'Zavřít',cancel:'Zrušit',
     accNote:'Přihlas se a postup ti zůstane na všech zařízeních.',accOff:'Služba účtů teď není dostupná.',nickBad:'Přezdívka musí mít 2–20 znaků.',
@@ -1208,6 +1208,8 @@ function accRender(){
     card.append(el('h2','',AC.user.name),el('div','note',tr_('signedAs')+' '+AC.user.email));
     card.append(mk(tr_('logout'),()=>accRun(async()=>{await OMA.signOut();PROG={best:{}};progStore();menuRefresh();accClose()})));
     card.querySelector('.pri').style.background='var(--st)';card.querySelector('.pri').style.color='var(--fg)';
+    card.append(inp('text',tr_('nick'),AC.nick||AC.user.name,v=>{AC.nick=v},'nickname'));
+    card.append(lnk(tr_('saveNick'),()=>accRun(async()=>{const n=(AC.nick||'').trim();if(n.length<2||n.length>20){AC.err=tr_('nickBad');return}await OMA.setNick(n);AC.nick='';AC.note=tr_('nickSaved')})));
     card.append(lnk(tr_('delAcc'),()=>{AC.mode='del';AC.err='';accRender()}));
   }else if(AC.mode==='del'){
     card.append(el('h2','',tr_('delAcc')),el('div','note',tr_('delWarn')));
@@ -1257,7 +1259,8 @@ const emit=(user,remote)=>dispatchEvent(new CustomEvent('oma-user',{detail:{user
 const OMA={
   user:null,
   signIn:(e,p)=>signInWithEmailAndPassword(auth,e,p),
-  async signUp(e,p,n){const c=await createUserWithEmailAndPassword(auth,e,p);await updateProfile(c.user,{displayName:n})},
+  async signUp(e,p,n){const c=await createUserWithEmailAndPassword(auth,e,p);await updateProfile(c.user,{displayName:n});emit(c.user)},
+  async setNick(n){await updateProfile(auth.currentUser,{displayName:n});emit(auth.currentUser)},
   signOut:()=>signOut(auth),
   reset:e=>sendPasswordResetEmail(auth,e),
   save:b=>OMA.user?setDoc(ref(OMA.user),{best:b},{merge:true}):Promise.resolve(),
