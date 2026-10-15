@@ -1,4 +1,3 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="cs"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -16,13 +15,15 @@ body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:14px system-
 .side:empty{display:none}
 #left{left:max(8px,env(safe-area-inset-left,0px))}
 #right{right:max(8px,env(safe-area-inset-right,0px));max-height:calc(100% - 190px);overflow-y:auto}
-.tr{display:flex;flex-direction:column;align-items:center;gap:2px;color:#000;cursor:grab;touch-action:none;font-size:15px;min-width:34px}
+.tr{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;color:#000;cursor:grab;touch-action:none;font-size:15px;min-width:34px}
 .tr b{font-weight:700;color:var(--fg)}
 .tr.empty{color:#8a8f98;cursor:default}
 .tr.empty b{color:#8a8f98}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tr:not(.empty){color:#fff}}
 button{font:inherit;color:var(--fg);background:var(--bg);border:2px solid var(--bd);border-radius:8px;padding:6px 10px;cursor:pointer}
-button.ln{width:42px;height:42px;border-radius:50%;border:3px solid var(--bg);background:var(--c);color:#fff;font-weight:700;font-size:16px;padding:0}
+button.ln{flex:none;aspect-ratio:1;width:42px;height:42px;border-radius:50%;border:3px solid var(--bg);background:var(--c);color:#fff;font-weight:700;font-size:16px;padding:0}
+@media (max-height:820px){#right{gap:6px;padding:8px}button.ln{width:34px;height:34px;font-size:14px}}
+@media (max-height:640px){button.ln{width:28px;height:28px;font-size:12px;border-width:2px}}
 button.ln.on{box-shadow:0 0 0 3px var(--fg)}
 #hud{margin-right:auto;font-weight:600}
 #msg{position:fixed;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);opacity:.7;font-size:12px;text-align:center;pointer-events:none;width:max-content;max-width:80%}
@@ -60,6 +61,24 @@ button.ln.on{box-shadow:0 0 0 3px var(--fg)}
 .tr.static{cursor:default}
 #mb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 8px);left:max(12px,env(safe-area-inset-left,0px))}
 #menu{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:40px;padding:16px;box-sizing:border-box;overflow:auto}
+#acb{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:max(12px,env(safe-area-inset-right,0px));font-weight:700;max-width:46vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 18px;border-radius:12px;font-weight:700;z-index:60;max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s}
+#toast.on{opacity:1}
+#acc{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:color-mix(in srgb,var(--bg) 80%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#acc .card{background:var(--st);border:3px solid var(--fg);border-radius:18px;padding:22px;width:min(380px,100%);max-height:100%;overflow:auto;box-sizing:border-box;display:flex;flex-direction:column;gap:10px}
+#acc h2{margin:0 0 4px;font-size:22px}
+#acc input{font:inherit;padding:10px 12px;border-radius:10px;border:2px solid var(--bd);background:var(--bg);color:var(--fg);width:100%;box-sizing:border-box}
+#acc .pri{background:var(--fg);color:var(--bg);font-weight:700;padding:11px;border-radius:12px;border:3px solid var(--fg)}
+#acc .lnk{background:none;border:none;padding:2px;text-decoration:underline;font-size:13px;text-align:left;opacity:.85}
+#acc .err{color:#e3302b;font-weight:600;font-size:13px;min-height:0}
+#acc .note,#acc .priv{font-size:13px;opacity:.8;line-height:1.4}
+#acc .row{display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.cw{position:relative}
+.lv.locked canvas{opacity:.28;filter:grayscale(1)}
+.lv.locked{cursor:not-allowed}
+.lk{position:absolute;inset:0;display:none;align-items:center;justify-content:center;pointer-events:none}
+.lv.locked .lk{display:flex}
+.lsub{font-size:12px;font-weight:600;opacity:.7;min-height:15px;text-align:center;max-width:160px;line-height:1.25;margin-top:-4px}
 #mt{font-size:clamp(40px,9vw,76px);font-weight:800;letter-spacing:-1px}
 #mlv{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
 .lv{display:flex;flex-direction:column;align-items:center;gap:10px;cursor:pointer;background:none;border:none;padding:0}
@@ -95,13 +114,14 @@ button.ln.tutp{border-radius:50%}
 <div id="msg" data-def="1">Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.</div>
 <div id="over"><div id="ot"></div><div id="ob"><button id="rs">Hrát znovu</button><button id="rm">Menu</button></div></div>
 <div id="rw"><div id="rwc"><div id="rwt">Week completed!</div><div id="rwn">You received a new locomotive</div><div id="rws">Choose reward</div><div id="rwb"></div></div></div>
-<div id="ver">v0.76</div>
+<div id="ver">v0.79</div>
 <div id="credit">Made by BLK in Czech Republic - 2026</div>
-<div id="menu"><div id="mt">OpenMetro</div><div id="mlv"></div><div id="mtu"></div><div id="lang"></div></div>
+<div id="toast"></div><div id="acc"></div>
+<div id="menu"><button id="acb"></button><div id="mt">OpenMetro</div><div id="mlv"></div><div id="mtu"></div><div id="lang"></div></div>
 <div id="tut"><div id="tutn"></div><div id="tutt"></div><div id="tutb"></div></div>
 <script>
 // barvy linek podle pražského metra: A zelená, B žlutá, C červená, D modrá; zbytek vlastní
-const COL=['#1fa04a','#f5b800','#e3302b','#1565c0','#8e4fc4','#f08a24','#1fb5b0','#e05fa0','#8b5a2b','#5b6270'],MAXL=10,CAP=8,VMAX=110,ACC=240,VMIN=14,R=15,MAXS=80;
+const COL=['#1fa04a','#f5b800','#e3302b','#1565c0','#8e4fc4','#f08a24','#1fb5b0','#e05fa0','#8b5a2b','#5b6270'],MAXL=6,CAP=8,VMAX=110,ACC=240,VMIN=14,R=15,MAXS=80;
 const cv=document.getElementById('cv'),ctx=cv.getContext('2d'),bar=document.getElementById('bar');
 let W,H,S,adj,paused=false,last=0,FDT=.016,DPR=1,cam={x:0,y:0,z:1};
 function resize(){const d=DPR=devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*d;cv.height=H*d;ctx.setTransform(d,0,0,d,0,0);if(S&&S.lines)ui()}
@@ -327,10 +347,11 @@ function move(L,tr,dt){
   }
 }
 function update(dt){
+  progTrack();
   S.t+=dt;
   const wkNow=TUT?0:Math.floor(S.t/168);
   if(wkNow>S.weeksDone){S.weeksDone=wkNow;S.reward=true;S.pool++;document.getElementById('rwn').innerHTML=tr_('newloc')+(S.weeksDone<=SPECIAL.length?'<br>'+tr_('newShape'):'');ui();document.getElementById('rwb').children[2].style.display=S.lines.length>=MAXL?'none':'';document.getElementById('rw').style.display='flex';return}
-  if((S.spawnP-=dt)<=0){S.spawnP=Math.max(1.2,2.6-S.t/150);if(!TUT||TUT.step>=3)spawnPax()}
+  if((S.spawnP-=dt)<=0){S.spawnP=Math.max(1.2,2.6-S.t/150)/(S.weeksDone>=9?1.2:1);if(!TUT||TUT.step>=3)spawnPax()}
   if(!TUT&&(S.spawnS-=dt)<=0){
     // 1. týden: 8 stanic (po 20 s); každý další týden +5 stanic rovnoměrně rozložených přes týden
     const cap=Math.min(MAXS,8+5*S.weeksDone);
@@ -344,7 +365,7 @@ function update(dt){
   }
   for(const s of S.stations){
     if(SANDBOX)s.over=0;else if(s.pax.length>=8)s.over+=dt;else s.over=Math.max(0,s.over-dt*2);
-    if(s.over>14&&!S.over){S.over=true;document.getElementById('ot').innerHTML=tr_('over',S.score);document.getElementById('over').style.display='flex'}
+    if(s.over>14&&!S.over){S.over=true;progTrack();progFlush(true);document.getElementById('ot').innerHTML=tr_('over',S.score);document.getElementById('over').style.display='flex'}
   }
 }
 function poly(n,a0,x,y,r){ctx.beginPath();for(let i=0;i<n;i++){const a=a0+i*2*Math.PI/n;ctx[i?'lineTo':'moveTo'](x+Math.cos(a)*r,y+Math.sin(a)*r)}ctx.closePath()}
@@ -805,6 +826,13 @@ function loop(t){
 // --- jazyky ---
 const I18N={
   en:{title:'OpenMetro - Web browser metro game',menu:'Menu',again:'Play again',hint:'Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.',
+
+    login:'Log in',register:'Create account',email:'E-mail',password:'Password (min. 6 characters)',nick:'Nickname (2–20 characters)',noAcc:'No account yet? Create one',haveAcc:'Already have an account? Log in',forgot:'Forgot password?',
+    resetSent:'Password reset e-mail sent (check spam too).',resetNeed:'Enter your e-mail first.',logout:'Log out',signedAs:'Signed in as',delAcc:'Delete account',delWarn:'This permanently deletes your account and saved progress. Enter your password to confirm.',delBtn:'Delete permanently',
+    privacy:'Privacy',privTxt:'We store your e-mail, nickname and your best score per map so your progress is saved across devices. Data is kept in Google Firebase. You can delete your account and all data at any time here.',close:'Close',cancel:'Cancel',
+    accNote:'Log in to keep your progress on all devices.',accOff:'Account service is not available right now.',nickBad:'Nickname must have 2–20 characters.',
+    aerr:{'auth/invalid-email':'Invalid e-mail address.','auth/missing-password':'Enter your password.','auth/invalid-credential':'Wrong e-mail or password.','auth/user-not-found':'Wrong e-mail or password.','auth/wrong-password':'Wrong e-mail or password.','auth/email-already-in-use':'This e-mail is already registered.','auth/weak-password':'Password must have at least 6 characters.','auth/too-many-requests':'Too many attempts. Try again later.','auth/network-request-failed':'Network error. Check your connection.','auth/requires-recent-login':'Please log in again and retry.',x:'Something went wrong. Try again.'},
+    lockedMsg:(g,n)=>'Locked – deliver '+g+' passengers in one run on '+n+'.',lockReq:(g,n)=>'🔒 '+g+' on '+n,bestN:n=>'Best: '+n,unlockMsg:n=>'Map unlocked: '+n+'!',
     tutorial:'Tutorial',tutSkip:'Skip',tutDone:'Tutorial complete! You know the basics. Good luck!',
     tut:['Drag from one station to another to build a line.','A new station appeared. Drag from the end station of your line to extend it.','Drag a train from the left panel onto your line. A train can run in either direction – the arrow shows which, and it depends on which side of the line your cursor is on when you drop it.','Passengers want to reach the station with their shape. Let your trains deliver 3 passengers.','Insert a stop: drag from the middle of your line to the new station.','Remove a station: drag from the end of your line – or from a link between two stations – onto the highlighted station and release. (Do it again any time you want to drop a stop.)','Water ahead! Extend the line from its end across the river to the new station – it uses a tunnel.','A new special station appeared! Build a NEW second line (pick an empty circle on the right) from the cross station to the highlighted station, so passengers can change lines.','Move a train from one line to another: grab it on the map and drop it on the second line. Tip: pause with Space to make it easier.','Delete a whole line: click its circle on the right, then click the X.'],
     wk:'Week completed!',newloc:'You received a new locomotive',newShape:'A new station shape appears!',choose:'Choose reward',
@@ -814,6 +842,13 @@ const I18N={
     spd:['Pause','Normal speed','Speed 2×','Speed 3×'],rTrain:'Train',rTunnel:'Tunnel',rLine:'Line',
     days:['Mo','Tu','We','Th','Fr','Sa','Su'],clock:(s,w,d)=>'Passengers handled: '+s+' · Week '+w+' · Day: '+d,lang:'Language'},
   cs:{title:'OpenMetro - Web browser metro game',menu:'Menu',again:'Hrát znovu',hint:'Vpravo vyber linku a táhni mezi stanicemi. Vlaky táhni z levého panelu na linku.',
+
+    login:'Přihlásit se',register:'Vytvořit účet',email:'E-mail',password:'Heslo (min. 6 znaků)',nick:'Přezdívka (2–20 znaků)',noAcc:'Nemáš účet? Vytvoř si ho',haveAcc:'Už máš účet? Přihlas se',forgot:'Zapomenuté heslo?',
+    resetSent:'E-mail pro obnovu hesla byl odeslán (zkontroluj i spam).',resetNeed:'Nejdřív zadej e-mail.',logout:'Odhlásit se',signedAs:'Přihlášen jako',delAcc:'Smazat účet',delWarn:'Tím trvale smažeš účet i uložený postup. Pro potvrzení zadej heslo.',delBtn:'Smazat navždy',
+    privacy:'Ochrana soukromí',privTxt:'Ukládáme tvůj e-mail, přezdívku a nejlepší výsledek na každé mapě, aby se ti postup uložil napříč zařízeními. Data jsou uložena ve službě Google Firebase. Účet i všechna data můžeš kdykoli smazat tady.',close:'Zavřít',cancel:'Zrušit',
+    accNote:'Přihlas se a postup ti zůstane na všech zařízeních.',accOff:'Služba účtů teď není dostupná.',nickBad:'Přezdívka musí mít 2–20 znaků.',
+    aerr:{'auth/invalid-email':'Neplatná e-mailová adresa.','auth/missing-password':'Zadej heslo.','auth/invalid-credential':'Špatný e-mail nebo heslo.','auth/user-not-found':'Špatný e-mail nebo heslo.','auth/wrong-password':'Špatný e-mail nebo heslo.','auth/email-already-in-use':'Tento e-mail je už zaregistrovaný.','auth/weak-password':'Heslo musí mít alespoň 6 znaků.','auth/too-many-requests':'Příliš mnoho pokusů. Zkus to později.','auth/network-request-failed':'Chyba sítě. Zkontroluj připojení.','auth/requires-recent-login':'Přihlas se prosím znovu a zkus to ještě jednou.',x:'Něco se nepovedlo. Zkus to znovu.'},
+    lockedMsg:(g,n)=>'Zamčeno – odbav '+g+' cestujících v jednom runu na mapě '+n+'.',lockReq:(g,n)=>'🔒 '+g+' na '+n,bestN:n=>'Nejlepší: '+n,unlockMsg:n=>'Mapa odemčena: '+n+'!',
     tutorial:'Tutoriál',tutSkip:'Přeskočit',tutDone:'Tutoriál dokončen! Znáš základy. Hodně štěstí!',
     tut:['Táhni myší z jedné stanice na druhou a vytvoř linku.','Objevila se nová stanice. Prodluž linku tažením z její koncové stanice.','Přetáhni vlak z levého panelu na svou linku. Vlak může jet oběma směry – ukáže to šipka a záleží, z jaké strany linky je při puštění kurzor.','Cestující chtějí na stanici se svým tvarem. Nech vlaky přepravit 3 cestující.','Vlož zastávku: táhni ze středu linky na novou stanici.','Odebrání stanice: táhni z konce linky – nebo z úseku mezi dvěma stanicemi – na zvýrazněnou stanici a pusť. (Takhle můžeš kdykoli zrušit zastávku.)','Řeka! Prodluž linku z jejího konce přes řeku na novou stanici – spotřebuje to tunel.','Objevila se nová speciální stanice! Vytvoř NOVOU druhou linku (vyber prázdné kolečko vpravo) z křížku na zvýrazněnou stanici, aby mohli cestující přestupovat.','Přehoď vlak z jedné linky na druhou: chyť ho na mapě a pusť na druhou linku. Tip: pauznutí mezerníkem to usnadní.','Smazání celé linky: klikni vpravo na její kolečko a pak na X.'],
     wk:'Týden dokončen!',newloc:'Získal jsi novou lokomotivu',newShape:'Objevuje se nový tvar stanice!',choose:'Vyber odměnu',
@@ -1004,12 +1039,42 @@ const LEVELS=[
   {name:'České Budějovice',rw:18,rivers:[[[0.267,-0.940],[0.276,-0.235],[0.282,0.049],[0.297,0.074],[0.312,0.110],[0.328,0.157],[0.339,0.196],[0.340,0.235],[0.331,0.274],[0.325,0.301],[0.328,0.329],[0.346,0.348],[0.361,0.364],[0.370,0.399],[0.379,0.435],[0.394,0.462],[0.413,0.489],[0.413,0.532],[0.394,0.564],[0.373,0.619],[0.364,0.642],[0.334,0.689],[0.303,0.720],[0.288,0.760],[0.291,0.791],[0.316,0.822],[0.346,0.842],[0.364,0.861],[0.367,0.885],[0.349,0.908],[0.346,0.948],[0.349,0.971],[0.343,1.000],[0.340,1.331],[0.340,1.879]],[[0.413,0.489],[0.443,0.501],[0.473,0.521],[0.482,0.564],[0.482,0.626],[0.479,0.689],[0.482,0.728],[0.504,0.791],[0.534,0.846],[0.558,0.885],[0.573,0.924],[0.575,0.971],[0.576,1.331],[0.576,1.879]]]},
   {name:'Plzeň',rw:22,rivers:[[[-0.286,-0.165],[0.057,0.033],[0.115,0.058],[0.155,0.076],[0.178,0.091],[0.198,0.098],[0.215,0.116],[0.229,0.140],[0.252,0.161],[0.275,0.178],[0.309,0.178],[0.329,0.194],[0.338,0.227],[0.344,0.240],[0.367,0.264],[0.389,0.266],[0.418,0.264],[0.441,0.266],[0.455,0.256],[0.458,0.241],[0.475,0.244],[0.498,0.256],[0.527,0.260],[0.561,0.248],[0.596,0.236],[0.630,0.219],[0.645,0.217]],[[0.710,-0.992],[0.707,-0.165],[0.704,0.008],[0.703,0.050],[0.696,0.099],[0.676,0.149],[0.659,0.186],[0.644,0.219],[0.630,0.264],[0.616,0.306],[0.596,0.343],[0.573,0.364],[0.567,0.388],[0.578,0.413],[0.596,0.430],[0.610,0.450],[0.613,0.475],[0.599,0.504],[0.578,0.521],[0.567,0.545],[0.576,0.579],[0.596,0.599],[0.624,0.616],[0.639,0.636],[0.633,0.665],[0.621,0.694],[0.627,0.727],[0.630,0.756],[0.624,0.781],[0.596,0.793],[0.561,0.800],[0.515,0.803],[0.475,0.808],[0.435,0.814],[0.401,0.818]],{w:190,p:[[0.298,0.835],[0.372,0.835]]},[[0.298,0.917],[0.309,0.950],[0.344,0.988],[0.367,1.157],[0.372,1.983]]]}
 ];
+['sandbox','desert','usti','praha','brno','cb','plzen'].forEach((id,i)=>{LEVELS[i].id=id});
 function drawPreview(c,lv){
   const x=c.getContext('2d'),w=c.width,h=c.height,wc=getComputedStyle(document.documentElement).getPropertyValue('--water').trim();
   x.clearRect(0,0,w,h);x.strokeStyle=wc;x.lineWidth=w*.09*((lv.rw||44)/44);x.lineCap='butt';x.lineJoin='round';
   for(const r of lv.rivers){const pts=r.p||r;x.lineWidth=w*.09*((r.w||lv.rw||44)/44);x.lineCap=r.w?'round':'butt';x.beginPath();pts.forEach((p,k)=>x[k?'lineTo':'moveTo'](p[0]*w,p[1]*h));x.stroke()}
 }
-const lvCanvases=[];let tutCanvas=null;
+const lvCanvases=[],lvEls=[];let tutCanvas=null;
+// --- postup hráče, odemykání map ---
+const GOAL=1000,PRIV_MAIL='';
+let PROG={best:{}},curLv=-1,progDirty=false,progT=0;
+try{const j=JSON.parse(localStorage.getItem('om_prog')||'{}');if(j&&j.best)PROG.best=j.best}catch(e){}
+function progStore(){try{localStorage.setItem('om_prog',JSON.stringify(PROG))}catch(e){}}
+function unlocked(i){const lv=LEVELS[i];if(!lv)return false;if(lv.sandbox||i<=2)return true;return (PROG.best[LEVELS[i-1].id]||0)>=GOAL}
+function progMerge(remote){let ch=false;const b={};for(const k of new Set([...Object.keys(remote||{}),...Object.keys(PROG.best)])){const r=remote&&remote[k]||0,l=PROG.best[k]||0;b[k]=Math.max(r,l);if(l>r)ch=true}PROG.best=b;return ch}
+function progSave(){if(window.OMA&&OMA.user){OMA.save(PROG.best).catch(()=>{progDirty=true})}}
+function progFlush(force){if(!progDirty&&!force)return;progDirty=false;progStore();progSave()}
+function progTrack(){
+  if(curLv<1||TUT||SANDBOX||inMenu)return;
+  const id=LEVELS[curLv].id;if(S.score<=(PROG.best[id]||0))return;
+  const nx=LEVELS[curLv+1],was=nx?unlocked(curLv+1):true;
+  PROG.best[id]=S.score;progDirty=true;
+  if(nx&&!was&&unlocked(curLv+1)){toast(tr_('unlockMsg',nx.name),5000);progFlush(true)}
+  else if(performance.now()-progT>15000){progT=performance.now();progFlush()}
+}
+let toastT=0;
+function toast(t,ms=3500){const e=document.getElementById('toast');e.textContent=t;e.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>e.classList.remove('on'),ms)}
+function menuRefresh(){
+  lvEls.forEach((o,i)=>{
+    const lv=LEVELS[i],u=unlocked(i),best=PROG.best[lv.id]||0;
+    o.b.classList.toggle('locked',!u);
+    o.sub.textContent=!u?tr_('lockReq',GOAL,LEVELS[i-1].name):(!lv.sandbox&&best>0?tr_('bestN',best):'');
+  });
+  const ab=document.getElementById('acb');if(ab)ab.textContent=AC.user?'👤 '+AC.user.name:tr_('login');
+}
+addEventListener('visibilitychange',()=>{if(document.hidden)progFlush(true)});
+addEventListener('pagehide',()=>progFlush(true));
 function buildMenu(){
   const box=document.getElementById('mlv');
   {const lg=document.getElementById('lang');lg.innerHTML='<span id="langt"></span>';
@@ -1018,7 +1083,12 @@ function buildMenu(){
     const b=document.createElement('button');b.className='lv'+(lv.sandbox?' sb':'');
     const c=document.createElement('canvas');c.width=300;c.height=300;
     const s=document.createElement('span');s.textContent=lv.name;
-    b.append(c,s);b.onclick=()=>startLevel(i);box.appendChild(b);lvCanvases.push(c);
+    const w=document.createElement('div');w.className='cw';
+    const lk=document.createElement('div');lk.className='lk';
+    lk.innerHTML='<svg viewBox="0 0 24 24" width="54" height="54" fill="none" stroke="var(--fg)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" fill="var(--fg)"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+    w.append(c,lk);
+    const sub=document.createElement('span');sub.className='lsub';
+    b.append(w,s,sub);b.onclick=()=>{if(!unlocked(i)){toast(tr_('lockedMsg',GOAL,LEVELS[i-1].name));return}startLevel(i)};box.appendChild(b);lvCanvases.push(c);lvEls.push({b,sub});
   });
   {const b=document.createElement('button');b.className='lv tut';
    const c=document.createElement('canvas');c.width=300;c.height=300;tutCanvas=c;
@@ -1039,6 +1109,7 @@ function applyLang(){
   if(S.over)document.getElementById('ot').innerHTML=tr_('over',S.score);
   if(!S.over&&(!document.getElementById('msg').textContent||document.getElementById('msg').dataset.def))
     {const m=document.getElementById('msg');m.textContent=tr_('hint');m.dataset.def='1'}
+  menuRefresh();if(typeof accRender==='function')accRender();
   clockUI();ui();
 }
 function setLang(l){LANG=l;try{localStorage.setItem('om_lang',l)}catch(e){}applyLang()}
@@ -1099,7 +1170,7 @@ function tutTick(dt){
   if(TUT_STEPS[TUT.step].done()){TUT.okT=.9;document.getElementById('tut').classList.add('ok')}
 }
 function startTutorial(){
-  SANDBOX=true;RIVERS=[TUT_RIVER];RW=30;cam.x=0;cam.y=0;cam.z=1;drag=null;TUT=null;
+  curLv=-1;SANDBOX=true;RIVERS=[TUT_RIVER];RW=30;cam.x=0;cam.y=0;cam.z=1;drag=null;TUT=null;
   reset();
   S.stations=[{fx:.25,fy:.62,shape:'c',pax:[],over:0},{fx:.42,fy:.36,shape:'t',pax:[],over:0}];
   S.pool=2;S.tunnels=1;S.sel=0;buildAdj();fitCam(0,true);
@@ -1108,16 +1179,97 @@ function startTutorial(){
 }
 function openMenu(){
   TUT=null;tutRender();
-  inMenu=true;lvCanvases.forEach((c,i)=>drawPreview(c,LEVELS[i]));drawTutIcon();
+  progFlush(true);curLv=-1;
+  inMenu=true;menuRefresh();lvCanvases.forEach((c,i)=>drawPreview(c,LEVELS[i]));drawTutIcon();
   document.getElementById('menu').style.display='flex';
 }
 function startLevel(i){
+  if(!unlocked(i))return;curLv=i;
   TUT=null;tutRender();SANDBOX=!!LEVELS[i].sandbox;RIVERS=LEVELS[i].rivers;RW=LEVELS[i].rw||44;cam.x=0;cam.y=0;cam.z=1;drag=null;
   reset();fitCam(0,true);document.getElementById('menu').style.display='none';inMenu=false;setSpeed(1);
 }
+// --- účet ---
+const AC={user:null,mode:'in',err:'',busy:false,priv:false,email:'',nick:'',note:''};
+function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!==undefined)e.textContent=txt;return e}
+function accOpen(){if(!window.OMA){toast(tr_('accOff'));return}AC.mode=AC.user?'user':'in';AC.err='';AC.note='';AC.priv=false;document.getElementById('acc').style.display='flex';accRender()}
+function accClose(){document.getElementById('acc').style.display='none'}
+function accErr(e){const m=tr_('aerr');AC.err=m[e&&e.code]||m.x}
+async function accRun(fn){AC.busy=true;AC.err='';AC.note='';accRender();try{await fn()}catch(e){accErr(e)}AC.busy=false;accRender()}
+function accRender(){
+  const box=document.getElementById('acc');if(!box||box.style.display!=='flex')return;
+  box.innerHTML='';const card=el('div','card');box.appendChild(card);
+  box.onclick=e=>{if(e.target===box)accClose()};
+  const inp=(type,ph,val,on,ac)=>{const i=el('input');i.type=type;i.placeholder=ph;i.value=val;i.autocomplete=ac;i.oninput=()=>on(i.value);i.onkeydown=e=>{if(e.key==='Enter')go&&go()};return i};
+  let go=null;
+  const mk=(t,fn)=>{const b=el('button','pri',t);b.disabled=AC.busy;b.onclick=fn;go=fn;return b};
+  const lnk=(t,fn)=>{const b=el('button','lnk',t);b.onclick=fn;return b};
+  let pw='';
+  if(AC.mode==='user'){
+    card.append(el('h2','',AC.user.name),el('div','note',tr_('signedAs')+' '+AC.user.email));
+    card.append(mk(tr_('logout'),()=>accRun(async()=>{await OMA.signOut();PROG={best:{}};progStore();menuRefresh();accClose()})));
+    card.querySelector('.pri').style.background='var(--st)';card.querySelector('.pri').style.color='var(--fg)';
+    card.append(lnk(tr_('delAcc'),()=>{AC.mode='del';AC.err='';accRender()}));
+  }else if(AC.mode==='del'){
+    card.append(el('h2','',tr_('delAcc')),el('div','note',tr_('delWarn')));
+    card.append(inp('password',tr_('password'),'',v=>{pw=v},'current-password'));
+    card.append(mk(tr_('delBtn'),()=>accRun(async()=>{await OMA.del(pw);PROG={best:{}};progStore();menuRefresh();accClose()})));
+    card.append(lnk(tr_('cancel'),()=>{AC.mode='user';AC.err='';accRender()}));
+  }else{
+    const up=AC.mode==='up';
+    card.append(el('h2','',up?tr_('register'):tr_('login')));
+    if(up)card.append(inp('text',tr_('nick'),AC.nick,v=>{AC.nick=v},'nickname'));
+    card.append(inp('email',tr_('email'),AC.email,v=>{AC.email=v},'email'));
+    card.append(inp('password',tr_('password'),'',v=>{pw=v},up?'new-password':'current-password'));
+    card.append(mk(up?tr_('register'):tr_('login'),()=>accRun(async()=>{
+      if(up){const n=AC.nick.trim();if(n.length<2||n.length>20){AC.err=tr_('nickBad');return}await OMA.signUp(AC.email.trim(),pw,n)}
+      else await OMA.signIn(AC.email.trim(),pw);
+      accClose()})));
+    card.append(lnk(up?tr_('haveAcc'):tr_('noAcc'),()=>{AC.mode=up?'in':'up';AC.err='';accRender()}));
+    if(!up)card.append(lnk(tr_('forgot'),()=>{if(!AC.email.trim()){AC.err=tr_('resetNeed');accRender();return}accRun(async()=>{await OMA.reset(AC.email.trim());AC.note=tr_('resetSent')})}));
+    card.append(el('div','note',tr_('accNote')));
+  }
+  if(AC.err)card.append(el('div','err',AC.err));
+  if(AC.note)card.append(el('div','note',AC.note));
+  const row=el('div','row');
+  row.append(lnk(tr_('privacy'),()=>{AC.priv=!AC.priv;accRender()}),lnk(tr_('close'),accClose));
+  card.append(row);
+  if(AC.priv)card.append(el('div','priv',tr_('privTxt')+(PRIV_MAIL?' '+PRIV_MAIL:'')));
+}
+document.getElementById('acb').onclick=accOpen;
+addEventListener('oma-user',async e=>{
+  const d=e.detail;AC.user=d.user;
+  if(d.user&&d.remote){const ch=progMerge(d.remote);progStore();if(ch||!Object.keys(d.remote).length)progSave()}
+  menuRefresh();accRender();
+});
 document.getElementById('mb').onclick=openMenu;
 document.getElementById('rm').onclick=openMenu;
 resize();reset();buildMenu();applyLang();openMenu();requestAnimationFrame(loop);
-</script></body></html>
-
+</script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmailAndPassword,signOut,sendPasswordResetEmail,updateProfile,deleteUser,reauthenticateWithCredential,EmailAuthProvider} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,deleteDoc} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+const app=initializeApp({apiKey:"AIzaSyCCH88hIE9AItoxnpc6RLtbNpLNb-eIbao",authDomain:"openmetro.firebaseapp.com",projectId:"openmetro",storageBucket:"openmetro.firebasestorage.app",messagingSenderId:"1026816063656",appId:"1:1026816063656:web:e1ca20d08a1389a1a76a9d"});
+const auth=getAuth(app),db=getFirestore(app);
+const nameOf=u=>u.displayName||(u.email||'').split('@')[0];
+const ref=u=>doc(db,'players',u.uid);
+const emit=(user,remote)=>dispatchEvent(new CustomEvent('oma-user',{detail:{user:user?{name:nameOf(user),email:user.email}:null,remote}}));
+const OMA={
+  user:null,
+  signIn:(e,p)=>signInWithEmailAndPassword(auth,e,p),
+  async signUp(e,p,n){const c=await createUserWithEmailAndPassword(auth,e,p);await updateProfile(c.user,{displayName:n})},
+  signOut:()=>signOut(auth),
+  reset:e=>sendPasswordResetEmail(auth,e),
+  save:b=>OMA.user?setDoc(ref(OMA.user),{best:b},{merge:true}):Promise.resolve(),
+  async del(pw){const u=auth.currentUser;await reauthenticateWithCredential(u,EmailAuthProvider.credential(u.email,pw));try{await deleteDoc(ref(u))}catch(e){}await deleteUser(u)}
+};
+window.OMA=OMA;
+onAuthStateChanged(auth,async u=>{
+  OMA.user=u;
+  if(!u){emit(null);return}
+  let remote=null;
+  try{const d=await getDoc(ref(u));remote=d.exists()?(d.data().best||{}):{}}catch(e){console.warn('progress load failed',e)}
+  emit(u,remote);
+});
+</script>
 </body></html>
