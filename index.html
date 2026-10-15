@@ -132,10 +132,10 @@ button.ln.tutp{border-radius:50%}
 <div id="msg" data-def="1">Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.</div>
 <div id="over"><div id="ot"></div><div id="ob"><button id="rs">Hrát znovu</button><button id="rm">Menu</button></div></div>
 <div id="rw"><div id="rwc"><div id="rwt">Week completed!</div><div id="rwn">You received a new locomotive</div><div id="rws">Choose reward</div><div id="rwb"></div></div></div>
-<div id="ver">v0.84</div>
+<div id="ver">v0.85</div>
 <div id="credit">Made by BLK in Czech Republic - 2026</div>
 <div id="toast"></div><div id="acc"></div>
-<div id="menu"><button id="acb"></button><div id="mt">OpenMetro</div><div id="carw"><button class="ca" id="cl" aria-label="‹">‹</button><div id="car"><div id="track"></div></div><button class="ca" id="cr" aria-label="›">›</button></div><div id="lbw"><div id="lbt"></div><div id="lb"></div></div><div id="lang"></div></div>
+<div id="menu"><button id="acb"></button><div id="mt">OpenMetro</div><div id="carw"><button class="ca" id="cl" aria-label="‹">‹</button><div id="car"><div id="track"></div></div><button class="ca" id="cr" aria-label="›">›</button></div><div id="lbw"><div id="lb"></div></div><div id="lang"></div></div>
 <div id="tut"><div id="tutn"></div><div id="tutt"></div><div id="tutb"></div></div>
 <script>
 // barvy linek podle pražského metra: A zelená, B žlutá, C červená, D modrá; zbytek vlastní
@@ -1242,7 +1242,6 @@ function lbShow(){
   const li=selIdx-1;
   if(li<0||LEVELS[li].sandbox){w.style.display='none';return}
   w.style.display='flex';const lv=LEVELS[li],box=document.getElementById('lb');
-  document.getElementById('lbt').textContent=tr_('lbTitle',lv.name);
   if(!unlocked(li)){box.className='';box.textContent=tr_('lockedMsg',GOAL,LEVELS[li-1].name);return}
   const c=LB[lv.id];
   if(c)lbRender(c.rows);else{box.className='';box.textContent=tr_('lbLoading')}
