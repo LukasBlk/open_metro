@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="cs"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -132,7 +133,7 @@ button.ln.tutp{border-radius:50%}
 <div id="msg" data-def="1">Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.</div>
 <div id="over"><div id="ot"></div><div id="ob"><button id="rs">Hrát znovu</button><button id="rm">Menu</button></div></div>
 <div id="rw"><div id="rwc"><div id="rwt">Week completed!</div><div id="rwn">You received a new locomotive</div><div id="rws">Choose reward</div><div id="rwb"></div></div></div>
-<div id="ver">v0.82</div>
+<div id="ver">v0.83</div>
 <div id="credit">Made by BLK in Czech Republic - 2026</div>
 <div id="toast"></div><div id="acc"></div>
 <div id="menu"><button id="acb"></button><div id="mt">OpenMetro</div><div id="carw"><button class="ca" id="cl" aria-label="‹">‹</button><div id="car"><div id="track"></div></div><button class="ca" id="cr" aria-label="›">›</button></div><div id="lbw"><div id="lbt"></div><div id="lb"></div></div><div id="lang"></div></div>
@@ -1240,7 +1241,7 @@ function lbShow(){
   if(!window.OMA){if(!c)box.textContent=tr_('lbOff');return}
   if(c&&Date.now()-c.t<45000)return;
   const id=lv.id;
-  OMA.top(id).then(rows=>{LB[id]={t:Date.now(),rows};if(inMenu&&LEVELS[selIdx-1]&&LEVELS[selIdx-1].id===id)lbRender(rows)}).catch(()=>{if(!LB[id]&&inMenu&&LEVELS[selIdx-1]&&LEVELS[selIdx-1].id===id){box.className='';box.textContent=tr_('lbOff')}});
+  OMA.top(id).then(rows=>{LB[id]={t:Date.now(),rows};if(inMenu&&LEVELS[selIdx-1]&&LEVELS[selIdx-1].id===id)lbRender(rows)}).catch(e=>{console.warn('leaderboard load failed',e);if(!LB[id]&&inMenu&&LEVELS[selIdx-1]&&LEVELS[selIdx-1].id===id){box.className='';box.textContent=tr_('lbOff')+(e&&e.code?' ('+e.code+')':'')}});
 }
 document.getElementById('cl').onclick=()=>carSel(selIdx-1);
 document.getElementById('cr').onclick=()=>carSel(selIdx+1);
@@ -1351,4 +1352,6 @@ onAuthStateChanged(auth,async u=>{
   emit(u,remote);
 });
 </script>
+</body></html>
+
 </body></html>
