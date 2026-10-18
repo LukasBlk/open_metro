@@ -145,7 +145,7 @@ button.ln.tutp{border-radius:50%}
 <div id="over"><div id="ot"></div><div id="ob"><button id="rs">Hrát znovu</button><button id="rm">Menu</button></div></div>
 <div id="wkp"><div id="wkc"><div id="wkt"></div><div id="wkm"></div><div id="wkb"><button id="wkmn"></button><button id="wkgo"></button></div></div></div>
 <div id="rw"><div id="rwc"><div id="rwt">Week completed!</div><div id="rwn">You received a new locomotive</div><div id="rws">Choose reward</div><div id="rwb"></div></div></div>
-<div id="ver">v0.106</div>
+<div id="ver">v0.107</div>
 <div id="credit">Made by Lum1x in Czech Republic - 2026</div>
 <div id="toast"></div><div id="acc"></div>
 <div id="menu"><button class="vb" id="vbm"></button><button class="vb mu" id="mvm"></button><button id="acb"></button><div id="mt">OpenMetro</div><div id="carw"><button class="ca" id="cl" aria-label="‹">‹</button><div id="car"><div id="track"></div></div><button class="ca" id="cr" aria-label="›">›</button></div><div id="lbw"><div id="lb"></div></div><div id="lang"></div></div>
@@ -1574,7 +1574,7 @@ const OMA={
   async save(b){const u=OMA.user;if(!u)return;await setDoc(ref(u),{best:b},{merge:true});
     for(const k of MAPS){const v=b[k]||0;if(v>0&&OMA.sent[k]!==v){try{await setDoc(doc(db,'scores',k,'entries',u.uid),{name:nameOf(u),score:v});OMA.sent[k]=v}catch(e){console.warn('score submit failed',k,e)}}}},
   async top(m){const r=await getDocs(query(collection(db,'scores',m,'entries'),orderBy('score','desc'),limit(20)));return r.docs.map(d=>({uid:d.id,name:d.data().name,score:d.data().score}))},
-  async wkSave(idx,score){const u=OMA.user;if(!u)return;await setDoc(doc(db,'weekly',String(idx),'entries',u.uid),{name:nameOf(u),score})},
+  async wkSave(idx,score){const u=OMA.user;if(!u)return;await setDoc(doc(db,'weekly',String(idx),'entries',u.uid),{name:nameOf(u),score,wk:idx})},
   async wkTop(idx){const r=await getDocs(query(collection(db,'weekly',String(idx),'entries'),orderBy('score','desc'),limit(20)));return r.docs.map(d=>({uid:d.id,name:d.data().name,score:d.data().score}))},
   async del(pw){const u=auth.currentUser;await reauthenticateWithCredential(u,EmailAuthProvider.credential(u.email,pw));for(const k of MAPS){try{await deleteDoc(doc(db,'scores',k,'entries',u.uid))}catch(e){}}{const wi=Math.floor((Date.now()-Date.UTC(2024,0,1))/6048e5);for(let k=wi-12;k<=wi;k++){try{await deleteDoc(doc(db,'weekly',String(k),'entries',u.uid))}catch(e){}}}try{await deleteDoc(ref(u))}catch(e){}await deleteUser(u)}
 };
