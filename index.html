@@ -33,6 +33,14 @@ button.ln.on{box-shadow:0 0 0 3px var(--fg)}
 .ot2{display:flex;flex-direction:column;align-items:center;gap:2px}
 .ot2 b{font-size:clamp(34px,7vw,56px);font-weight:800}
 .ot2 span{font-size:16px;opacity:.65;font-weight:600}
+#wkp{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(0,0,0,.55)}
+#wkc{background:var(--bar);color:var(--fg);padding:28px 32px;border-radius:18px;border:1px solid var(--bd);text-align:center;display:flex;flex-direction:column;gap:14px;max-width:420px}
+#wkt{font-size:24px;font-weight:800}
+#wkm{font-size:17px;font-weight:600;line-height:1.4}
+#wkb{display:flex;gap:12px;justify-content:center;margin-top:6px}
+#wkb button{font-size:18px;font-weight:700;padding:12px 28px;border-radius:14px;border:3px solid var(--fg);background:var(--st);color:var(--fg)}
+#wkb button#wkgo{background:var(--fg);color:var(--bg)}
+#wkb button:hover{box-shadow:0 0 0 4px var(--bd)}
 #ob{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
 #ob button{font-size:18px;font-weight:700;padding:14px 30px;border-radius:14px;border:3px solid var(--fg);background:var(--st);color:var(--fg)}
 #ob button:hover{background:var(--fg);color:var(--bg);box-shadow:0 0 0 4px var(--bd)}
@@ -111,8 +119,8 @@ button.ln.on{box-shadow:0 0 0 3px var(--fg)}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes fadeOut{from{opacity:1}to{opacity:0}}
 @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
-#rw,#over,#menu{animation:fadeIn .25s ease}
-#rwc{animation:pop .3s cubic-bezier(.2,.9,.3,1.15)}
+#rw,#wkp,#over,#menu{animation:fadeIn .25s ease}
+#rwc,#wkc{animation:pop .3s cubic-bezier(.2,.9,.3,1.15)}
 #rw.out{animation:fadeOut .22s ease forwards}
 button{transition:background .15s,box-shadow .15s,border-color .15s,color .15s}
 #lang{display:flex;gap:8px;align-items:center;font-size:14px}#lang span{opacity:.6;margin-right:4px}#lang button{font:inherit;padding:6px 12px;border-radius:8px;border:2px solid currentColor;background:transparent;color:inherit;cursor:pointer;opacity:.6}#lang button.on{opacity:1;font-weight:700}
@@ -135,8 +143,9 @@ button.ln.tutp{border-radius:50%}
 <div id="left" class="side"></div><div id="right" class="side"></div>
 <div id="msg" data-def="1">Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.</div>
 <div id="over"><div id="ot"></div><div id="ob"><button id="rs">Hrát znovu</button><button id="rm">Menu</button></div></div>
+<div id="wkp"><div id="wkc"><div id="wkt"></div><div id="wkm"></div><div id="wkb"><button id="wkmn"></button><button id="wkgo"></button></div></div></div>
 <div id="rw"><div id="rwc"><div id="rwt">Week completed!</div><div id="rwn">You received a new locomotive</div><div id="rws">Choose reward</div><div id="rwb"></div></div></div>
-<div id="ver">v0.102</div>
+<div id="ver">v0.106</div>
 <div id="credit">Made by Lum1x in Czech Republic - 2026</div>
 <div id="toast"></div><div id="acc"></div>
 <div id="menu"><button class="vb" id="vbm"></button><button class="vb mu" id="mvm"></button><button id="acb"></button><div id="mt">OpenMetro</div><div id="carw"><button class="ca" id="cl" aria-label="‹">‹</button><div id="car"><div id="track"></div></div><button class="ca" id="cr" aria-label="›">›</button></div><div id="lbw"><div id="lb"></div></div><div id="lang"></div></div>
@@ -160,25 +169,25 @@ const SPECIAL=['d','p','x','a']; // odemykají se po 1., 2., 3. a 4. týdnu
 function addStation(init){
   const n=S.stations.length,act=['c','t','s'],uns=SPECIAL.slice(0,Math.min(SPECIAL.length,S.weeksDone));
   // oblast roste pomalu (třetinově), nová stanice vzniká poblíž stávající sítě; občas (~20 %) dál, jako předměstí
-  const g=Math.min(2.5,Math.max(1,Math.pow((n+1)/9,.33)));
-  const far=!init&&n>=4&&Math.random()<.2,lo=init?90:far?220:115,hi=init?1e9:far?380:215;
+  const g=Math.min(2.5,Math.max(1,Math.pow((n+1)/9,.33))),gw=WEEKLY?1500:W,gh=WEEKLY?850:H,RS=WEEKLY?RSt:Math.random; // weekly: pevná virtuální velikost a seedovaná náhoda => stejná mapa pro všechny
+  const far=!init&&n>=4&&RS()<.2,lo=init?90:far?220:115,hi=init?1e9:far?380:215;
   let pick=null,fb=null,fbs=1e9;
   for(let k=0;k<150&&!pick;k++){
-    const fx=init?.3+Math.random()*.4:.5+(Math.random()-.5)*.76*g,fy=init?.3+Math.random()*.4:.5+(Math.random()-.5)*.8*g;
-    if(nearWater(fx*W,fy*H))continue;
-    let md=1e9;for(const o of S.stations)md=Math.min(md,Math.hypot((o.fx-fx)*W,(o.fy-fy)*H));
+    const fx=init?.3+RS()*.4:.5+(RS()-.5)*.76*g,fy=init?.3+RS()*.4:.5+(RS()-.5)*.8*g;
+    if(nearWater(fx*gw,fy*gh,gw,gh))continue;
+    let md=1e9;for(const o of S.stations)md=Math.min(md,Math.hypot((o.fx-fx)*gw,(o.fy-fy)*gh));
     if(md<90)continue;
     if(md>=lo&&md<=hi)pick={fx,fy};
     else{const sc=md<lo?lo-md:md-hi;if(sc<fbs){fbs=sc;fb={fx,fy}}}
   }
-  if(!pick)pick=fb||{fx:.5+(Math.random()-.5)*.6,fy:.5+(Math.random()-.5)*.6};
+  if(!pick)pick=fb||{fx:.5+(RS()-.5)*.6,fy:.5+(RS()-.5)*.6};
   const {fx,fy}=pick;
   let sh;
   if(n<3)sh=act[n];
   else{
     const fresh=uns.find(x=>!S.stations.some(o=>o.shape===x));
     if(fresh)sh=fresh;
-    else{const pool=[...act,...uns],w=pool.map(x=>act.includes(x)?1:.6);let r=Math.random()*w.reduce((a,b)=>a+b,0),i=0;while(i<pool.length-1&&r>=w[i]){r-=w[i];i++}sh=pool[i]}
+    else{const pool=[...act,...uns],w=pool.map(x=>act.includes(x)?1:.6);let r=RS()*w.reduce((a,b)=>a+b,0),i=0;while(i<pool.length-1&&r>=w[i]){r-=w[i];i++}sh=pool[i]}
   }
   S.stations.push({fx,fy,shape:sh,pax:[],over:0,sp:init?undefined:0});
 }
@@ -250,9 +259,9 @@ function insertSeg(h,X){
 let RW=44;
 let RIVERS=[];
 // řeka = pole bodů, nebo {w:šířka,p:[body]} (např. rybník)
-function riverPts(){return RIVERS.map(r=>{const pl=(r.p||r).map(p=>[p[0]*W,p[1]*H]);pl.w=r.w||RW;return pl})}
+function riverPts(w=W,h=H){return RIVERS.map(r=>{const pl=(r.p||r).map(p=>[p[0]*w,p[1]*h]);pl.w=r.w||RW;return pl})}
 function inWater(x,y,rp){for(const pl of rp)for(let k=0;k<pl.length-1;k++)if(dseg(x,y,pl[k],pl[k+1])<(pl.w||RW)/2)return true;return false}
-function nearWater(x,y){const rp=riverPts();for(const pl of rp)for(let k=0;k<pl.length-1;k++)if(dseg(x,y,pl[k],pl[k+1])<(pl.w||RW)/2+28)return true;return false}
+function nearWater(x,y,w,h){const rp=riverPts(w,h);for(const pl of rp)for(let k=0;k<pl.length-1;k++)if(dseg(x,y,pl[k],pl[k+1])<(pl.w||RW)/2+28)return true;return false}
 function crossings(p){
   // jeden tunel na každou řeku, kterou úsek přejede (opakovaný přejezd téže řeky se počítá jednou)
   let n=0;
@@ -334,9 +343,9 @@ function nextHop(f,sh){
   return null;
 }
 function spawnPax(){
-  const shapes=[...new Set(S.stations.map(s=>s.shape))],s=S.stations[Math.floor(Math.random()*S.stations.length)];
+  const RP=WEEKLY?RPx:Math.random,shapes=[...new Set(S.stations.map(s=>s.shape))],s=S.stations[Math.floor(RP()*S.stations.length)];
   const opts=shapes.filter(x=>x!==s.shape);if(!opts.length)return;
-  s.pax.push({shape:opts[Math.floor(Math.random()*opts.length)]});
+  s.pax.push({shape:opts[Math.floor(RP()*opts.length)]});
 }
 function stop(tr,s,n){
   for(const p of [...tr.pax]){
@@ -372,12 +381,13 @@ function update(dt){
   progTrack();sfxWatch();
   S.t+=dt;
   const wkNow=TUT?0:Math.floor(S.t/168);
-  if(wkNow>S.weeksDone){SFX.week();S.weeksDone=wkNow;S.reward=true;S.pool++;document.getElementById('rwn').innerHTML=tr_('newloc')+(S.weeksDone<=SPECIAL.length?'<br>'+tr_('newShape'):'');ui();document.getElementById('rwb').children[2].style.display=S.lines.length>=MAXL?'none':'';document.getElementById('rw').style.display='flex';return}
-  if((S.spawnP-=dt)<=0){S.spawnP=Math.max(1.2,2.6-S.t/150)/(S.weeksDone>=9?1.2:1);if(!TUT||TUT.step>=3)spawnPax()}
+  if(wkNow>S.weeksDone&&WEEKLY){S.weeksDone=wkNow;SFX.week()}
+  else if(wkNow>S.weeksDone){SFX.week();S.weeksDone=wkNow;S.reward=true;S.pool++;document.getElementById('rwn').innerHTML=tr_('newloc')+(S.weeksDone<=SPECIAL.length?'<br>'+tr_('newShape'):'');ui();document.getElementById('rwb').children[2].style.display=S.lines.length>=MAXL?'none':'';document.getElementById('rw').style.display='flex';return}
+  if((S.spawnP-=dt)<=0){S.spawnP=WEEKLY?Math.max(WK.paxMin,WK.pax*Math.pow(.5,S.t/WK.paxHalf)):Math.max(1.2,2.6-S.t/150)/(S.weeksDone>=9?1.2:1);if(!TUT||TUT.step>=3)spawnPax()}
   if(!TUT&&(S.spawnS-=dt)<=0){
     // 1. týden: 8 stanic (po 20 s); každý další týden +5 stanic rovnoměrně rozložených přes týden
-    const cap=Math.min(MAXS,8+5*S.weeksDone);
-    S.spawnS=S.weeksDone===0?20:168/5;
+    const cap=WEEKLY?MAXS:Math.min(MAXS,8+5*S.weeksDone);
+    S.spawnS=WEEKLY?Math.max(WK.stMin,WK.st*Math.pow(.5,S.t/WK.stHalf)):S.weeksDone===0?20:168/5;
     if(S.stations.length<cap){addStation();msg(tr_('newSt'))}
   }
   for(const L of S.lines){
@@ -877,6 +887,7 @@ function loop(t){
 const I18N={
   en:{title:'OpenMetro - Web browser metro game',menu:'Menu',again:'Play again',hint:'Pick a line on the right and drag between stations. Drag trains from the left panel onto a line.',
 
+    weekly:'Weekly challenge',wkEnds:t=>'Ends in '+t,wkMsg:(l,t,u)=>l+' lines, '+t+' trains and '+u+' tunnels – that is all you have for this challenge. Survive as long as you can!',wkGo:'Go',
     vol:'Sound effects',mus:'Music',lbTitle:n=>'TOP 20 – '+n,lbEmpty:'No scores yet – be the first!',lbLoading:'Loading…',lbOff:'Leaderboard is not available right now.',lbLogin:'Log in to get on the leaderboard.',
     saveNick:'Save nickname',nickSaved:'Nickname saved.',login:'Log in',register:'Create account',email:'E-mail',password:'Password (min. 6 characters)',nick:'Nickname (2–20 characters)',noAcc:'No account yet? Create one',haveAcc:'Already have an account? Log in',forgot:'Forgot password?',
     resetSent:'Password reset e-mail sent (check spam too).',resetNeed:'Enter your e-mail first.',logout:'Log out',signedAs:'Signed in as',delAcc:'Delete account',delWarn:'This permanently deletes your account and saved progress. Enter your password to confirm.',delBtn:'Delete permanently',
@@ -894,6 +905,7 @@ const I18N={
     days:['Mo','Tu','We','Th','Fr','Sa','Su'],clock:(s,w,d)=>'Passengers handled: '+s+' · Week '+w+' · Day: '+d,lang:'Language'},
   cs:{title:'OpenMetro - Web browser metro game',menu:'Menu',again:'Hrát znovu',hint:'Vpravo vyber linku a táhni mezi stanicemi. Vlaky táhni z levého panelu na linku.',
 
+    weekly:'Týdenní výzva',wkEnds:t=>'Končí za '+t,wkMsg:(l,t,u)=>l+' Linky, '+t+' vlaků a '+u+' tunely. Víc na tuhle výzvu nedostaneš. Přežij co nejdéle!',wkGo:'Jedeme',
     vol:'Zvukové efekty',mus:'Hudba',lbTitle:n=>'TOP 20 – '+n,lbEmpty:'Zatím žádné výsledky – buď první!',lbLoading:'Načítám…',lbOff:'Žebříček teď není dostupný.',lbLogin:'Přihlas se a zapiš se do žebříčku.',
     saveNick:'Uložit přezdívku',nickSaved:'Přezdívka uložena.',login:'Přihlásit se',register:'Vytvořit účet',email:'E-mail',password:'Heslo (min. 6 znaků)',nick:'Přezdívka (2–20 znaků)',noAcc:'Nemáš účet? Vytvoř si ho',haveAcc:'Už máš účet? Přihlas se',forgot:'Zapomenuté heslo?',
     resetSent:'E-mail pro obnovu hesla byl odeslán (zkontroluj i spam).',resetNeed:'Nejdřív zadej e-mail.',logout:'Odhlásit se',signedAs:'Přihlášen jako',delAcc:'Smazat účet',delWarn:'Tím trvale smažeš účet i uložený postup. Pro potvrzení zadej heslo.',delBtn:'Smazat navždy',
@@ -1044,7 +1056,7 @@ addEventListener('keydown',e=>{
   if(/^[1-9]$/.test(e.key)&&+e.key<=S.lines.length){S.sel=+e.key-1;ui()}
   if(e.code==='Space'){setSpeed(speed?0:lastSpeed);e.preventDefault()}
 });
-document.getElementById('rs').onclick=()=>{reset()};
+document.getElementById('rs').onclick=()=>{if(WEEKLY)wkStart();else reset()};
 // týdenní hodiny a ovládání času (1 s = 1 herní hodina, den = 24 s)
 const DN=['Mo','Tu','We','Th','Fr','Sa','Su'],MULT=[0,1,1/.66,1/.33];
 let speed=1,lastSpeed=1;
@@ -1097,7 +1109,39 @@ function drawPreview(c,lv){
   x.clearRect(0,0,w,h);x.strokeStyle=wc;x.lineWidth=w*.09*((lv.rw||44)/44);x.lineCap='butt';x.lineJoin='round';
   for(const r of lv.rivers){const pts=r.p||r;x.lineWidth=w*.09*((r.w||lv.rw||44)/44);x.lineCap=r.w?'round':'butt';x.beginPath();pts.forEach((p,k)=>x[k?'lineTo':'moveTo'](p[0]*w,p[1]*h));x.stroke()}
 }
-const lvCanvases=[],lvEls=[],carItems=[];let selIdx=1;let tutCanvas=null;
+// --- týdenní výzva: každý týden (od pondělí 00:00 UTC) stejná mapa pro všechny, pevné limity, exponenciálně rostoucí obtížnost ---
+let WEEKLY=false,WKI=null,_wk=null,RSt=Math.random,RPx=Math.random;
+const WK={lines:3,trains:6,tunnels:2,pax:2.6,paxHalf:420,paxMin:.2,st:26,stHalf:500,stMin:5}; // počáteční limity a ladění křivky obtížnosti
+function mulb(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const WK0=Date.UTC(2024,0,1),WKMS=7*864e5; // 1. 1. 2024 je pondělí
+function wkIdx(){return Math.floor((Date.now()-WK0)/WKMS)}
+function wkSeed(i){return ((i*2654435761)>>>0)^0x9E3779B9}
+function genWeekRiver(idx){
+  const r=mulb(wkSeed(idx)^0xA5A5),vert=r()<.5,mid=.3+r()*.4,A=.07+r()*.12,f=.8+r()*1,ph=r(),slope=(r()-.5)*.5,rw=26+Math.floor(r()*22),pts=[];
+  for(let k=0;k<=36;k++){const t=-.4+1.8*k/36,c=mid+slope*(t-.5)+A*Math.sin(2*Math.PI*(f*t+ph))+A*.4*Math.sin(2*Math.PI*(2.3*t+ph*3));pts.push(vert?[+c.toFixed(4),+t.toFixed(4)]:[+t.toFixed(4),+c.toFixed(4)])}
+  return {rivers:[pts],rw};
+}
+function wkInfo(){const i=wkIdx();if(!_wk||_wk.idx!==i)_wk=Object.assign({idx:i,end:WK0+(i+1)*WKMS},genWeekRiver(i));return _wk}
+function wkBestGet(i){try{const o=JSON.parse(localStorage.getItem('om_wk')||'null');return o&&o.w===i?o.b|0:0}catch(e){return 0}}
+let wkB=0;
+function wkTrack(){if(!WKI||S.score<=wkB)return;wkB=S.score;try{localStorage.setItem('om_wk',JSON.stringify({w:WKI.idx,b:wkB}))}catch(e){}}
+let WKS={};
+function wkSend(){if(isDev()||!AC.user||!window.OMA)return;const idx=wkIdx(),b=wkBestGet(idx);if(b>(WKS[idx]||0)){WKS[idx]=b;OMA.wkSave(idx,b).then(()=>{delete LB['wk'+idx];if(inMenu)lbShow()}).catch(e=>{WKS[idx]=0;console.warn('weekly submit failed',e)})}}
+function wkFmt(ms){const m=Math.max(0,Math.floor(ms/6e4)),d=Math.floor(m/1440),h=Math.floor(m%1440/60);return d>0?d+'d '+h+'h':h>0?h+'h '+(m%60)+'m':(m%60)+'m'}
+function wkSub(){if(!wkEl)return;const w=wkInfo(),b=wkBestGet(w.idx);wkEl.sub.textContent=tr_('wkEnds',wkFmt(w.end-Date.now()))+(b>0?'\n'+tr_('bestN',b):'');wkEl.sub.style.whiteSpace='pre-line'}
+function wkStart(){
+  const w=wkInfo();WEEKLY=true;WKI=w;wkB=wkBestGet(w.idx);RSt=mulb(wkSeed(w.idx)^1);RPx=mulb(wkSeed(w.idx)^2);
+  curLv=-1;TUT=null;tutRender();SANDBOX=false;RIVERS=w.rivers;RW=w.rw;cam.x=0;cam.y=0;cam.z=1;drag=null;SFX.duck(1);
+  reset();S.pool=WK.trains;S.tunnels=WK.tunnels;S.lines=S.lines.slice(0,WK.lines);buildAdj();ui();
+  fitCam(0,true);document.getElementById('menu').style.display='none';inMenu=false;setSpeed(0);
+  document.getElementById('wkt').textContent='⭐ '+tr_('weekly');document.getElementById('wkm').textContent=tr_('wkMsg',WK.lines,WK.trains,WK.tunnels);
+  document.getElementById('wkgo').textContent=tr_('wkGo');document.getElementById('wkmn').textContent=tr_('menu');
+  document.getElementById('wkp').style.display='flex';
+}
+document.getElementById('wkgo').onclick=()=>{document.getElementById('wkp').style.display='none';setSpeed(1)};
+document.getElementById('wkmn').onclick=()=>{document.getElementById('wkp').style.display='none';openMenu()};
+setInterval(()=>{if(!inMenu||!wkEl)return;const o=_wk&&_wk.idx,w=wkInfo();if(o!==w.idx)drawPreview(wkEl.c,w);wkSub()},1000);
+let wkEl=null;const lvCanvases=[],lvEls=[],carItems=[];let selIdx=1;let tutCanvas=null;
 // --- postup hráče, odemykání map ---
 const OVER_T=20,IDLE_T=10,GOAL=1000,PRIV_MAIL='',OWNER_MAIL='lukasbilek98@gmail.com',DEV_MAIL='lukasbilek98+master@gmail.com';
 // přezdívky: zakázané jsou označení vývojáře/správce (kromě majitele); pravidla ve Firestore hlídají totéž
@@ -1118,8 +1162,9 @@ function isDev(){return !!(AC.user&&(AC.user.email||'').toLowerCase()===DEV_MAIL
 function unlocked(i){return isDev()?!!LEVELS[i]:realUnlocked(i)}
 function progMerge(remote){let ch=false;const b={};for(const k of new Set([...Object.keys(remote||{}),...Object.keys(PROG.best)])){const r=remote&&remote[k]||0,l=PROG.best[k]||0;b[k]=Math.max(r,l);if(l>r)ch=true}PROG.best=b;return ch}
 function progSave(){if(isDev())return;if(window.OMA&&OMA.user){OMA.save(PROG.best).then(()=>{for(const k in PROG.best)delete LB[k];if(inMenu)lbShow()}).catch(()=>{progDirty=true})}}
-function progFlush(force){if(!progDirty&&!force)return;progDirty=false;progStore();progSave()}
+function progFlush(force){if(force)wkSend();if(!progDirty&&!force)return;progDirty=false;progStore();progSave()}
 function progTrack(){
+  if(WEEKLY){if(!TUT&&!inMenu)wkTrack();return}
   if(curLv<1||TUT||SANDBOX||inMenu)return;
   if(isDev()||!realUnlocked(curLv))return;
   const id=LEVELS[curLv].id;if(S.score<=(PROG.best[id]||0))return;
@@ -1136,6 +1181,7 @@ function menuRefresh(){
     o.b.classList.toggle('locked',!u);
     o.sub.textContent=u&&!lv.sandbox&&best>0?tr_('bestN',best):'';
   });
+  wkSub();
   const ab=document.getElementById('acb');if(ab)ab.textContent=AC.user?'👤 '+AC.user.name:tr_('login');
 }
 addEventListener('visibilitychange',()=>{if(document.hidden)progFlush(true)});
@@ -1155,6 +1201,11 @@ function buildMenu(){
     const sub=document.createElement('span');sub.className='lsub';
     b.append(w,s,sub);carItems.push(b);b.onclick=()=>carClick(carItems.indexOf(b));box.appendChild(b);lvCanvases.push(c);lvEls.push({b,sub});
   });
+  {const b=document.createElement('button');b.className='lv wk';
+   const c=document.createElement('canvas');c.width=300;c.height=300;
+   const w=document.createElement('div');w.className='cw';w.appendChild(c);
+   const nm=document.createElement('span'),sub=document.createElement('span');sub.className='lsub';
+   b.append(w,nm,sub);carItems.push(b);b.onclick=()=>carClick(carItems.indexOf(b));box.appendChild(b);wkEl={b,c,nm,sub}}
   {const b=document.createElement('button');b.className='lv tut';
    const c=document.createElement('canvas');c.width=300;c.height=300;tutCanvas=c;
    const sp=document.createElement('span');sp.id='tutLbl';
@@ -1170,6 +1221,7 @@ function applyLang(){
   document.querySelectorAll('#lang button').forEach(b=>b.classList.toggle('on',b.dataset.l===LANG));
   const lt=document.getElementById('langt');if(lt)lt.textContent=tr_('lang');
   const tl=document.getElementById('tutLbl');if(tl)tl.textContent=tr_('tutorial');
+  if(wkEl)wkEl.nm.textContent='⭐ '+tr_('weekly');
   if(TUT)tutRender();
   if(S.over)document.getElementById('ot').innerHTML=tr_('over',S.score);
   if(!S.over&&(!document.getElementById('msg').textContent||document.getElementById('msg').dataset.def))
@@ -1236,7 +1288,7 @@ function tutTick(dt){
   if(TUT_STEPS[TUT.step].done()){TUT.okT=.9;document.getElementById('tut').classList.add('ok')}
 }
 function startTutorial(){
-  curLv=-1;SANDBOX=true;RIVERS=[TUT_RIVER];RW=30;cam.x=0;cam.y=0;cam.z=1;drag=null;TUT=null;
+  curLv=-1;WEEKLY=false;SANDBOX=true;RIVERS=[TUT_RIVER];RW=30;cam.x=0;cam.y=0;cam.z=1;drag=null;TUT=null;
   reset();
   S.stations=[{fx:.25,fy:.62,shape:'c',pax:[],over:0},{fx:.42,fy:.36,shape:'t',pax:[],over:0}];
   S.pool=2;S.tunnels=1;S.sel=0;buildAdj();fitCam(0,true);
@@ -1246,25 +1298,25 @@ function startTutorial(){
 function openMenu(){
   TUT=null;tutRender();
   progFlush(true);curLv=-1;SFX.setIntensity(0);SFX.duck(1);
-  inMenu=true;menuRefresh();lvCanvases.forEach((c,i)=>drawPreview(c,LEVELS[i]));drawTutIcon();
+  inMenu=true;menuRefresh();lvCanvases.forEach((c,i)=>drawPreview(c,LEVELS[i]));if(wkEl)drawPreview(wkEl.c,wkInfo());drawTutIcon();
   document.getElementById('menu').style.display='flex';
   carSel(selIdx);
 }
 function startLevel(i){
-  if(!unlocked(i))return;curLv=i;SFX.duck(1);
+  if(!unlocked(i))return;curLv=i;WEEKLY=false;SFX.duck(1);
   TUT=null;tutRender();SANDBOX=!!LEVELS[i].sandbox;RIVERS=LEVELS[i].rivers;RW=LEVELS[i].rw||44;cam.x=0;cam.y=0;cam.z=1;drag=null;
   reset();fitCam(0,true);document.getElementById('menu').style.display='none';inMenu=false;setSpeed(1);
 }
 // --- výběr map (karusel) a žebříček ---
 const LB={};let swipeT=0;
-function carActivate(n){const i=n-1;if(i<0){startTutorial();return}if(!unlocked(i)){toast(tr_('lockedMsg',GOAL,LEVELS[i-1].name));return}startLevel(i)}
+function carActivate(n){if(n===0){startTutorial();return}if(n===1){wkStart();return}const i=n-2;if(!unlocked(i)){toast(tr_('lockedMsg',GOAL,LEVELS[i-1].name));return}startLevel(i)}
 function carClick(i){if(performance.now()-swipeT<350)return;if(i===selIdx)carActivate(i);else carSel(i)}
 function carPos(){const car=document.getElementById('car'),tk=document.getElementById('track'),b=carItems[selIdx];if(!b||!car.clientWidth)return;tk.style.transform='translateX('+Math.round(car.clientWidth/2-(b.offsetLeft+b.offsetWidth/2))+'px)'}
 function carSel(n){
   selIdx=Math.max(0,Math.min(carItems.length-1,n));
   carItems.forEach((b,i)=>b.classList.toggle('sel',i===selIdx));
   document.getElementById('cl').disabled=selIdx===0;document.getElementById('cr').disabled=selIdx===carItems.length-1;
-  try{localStorage.setItem('om_sel2',selIdx)}catch(e){}
+  try{localStorage.setItem('om_sel3',selIdx)}catch(e){}
   carPos();lbShow();
 }
 function lbRender(rows){
@@ -1274,18 +1326,17 @@ function lbRender(rows){
   rows.forEach((r,i)=>{const d=el('div','r'+(AC.user&&AC.user.uid===r.uid?' me':''));d.append(el('span','rk',i+1),el('span','nm',r.name||'?'),el('span','sc',r.score));box.appendChild(d)});
   if(!AC.user)box.appendChild(el('div','nt',tr_('lbLogin')));
 }
+function lbId(n){if(n===1)return 'wk'+wkInfo().idx;const lv=LEVELS[n-2];return lv&&!lv.sandbox?lv.id:null}
 function lbShow(){
-  const w=document.getElementById('lbw');
-  const li=selIdx-1;
-  if(li<0||LEVELS[li].sandbox){w.style.display='none';return}
-  w.style.display='flex';const lv=LEVELS[li],box=document.getElementById('lb');
-  if(!unlocked(li)){box.className='';box.textContent=tr_('lockedMsg',GOAL,LEVELS[li-1].name);return}
-  const c=LB[lv.id];
+  const w=document.getElementById('lbw'),n=selIdx,id=n>0?lbId(n):null;
+  if(!id){w.style.display='none';return}
+  w.style.display='flex';const box=document.getElementById('lb');
+  if(n>1&&!unlocked(n-2)){box.className='';box.textContent=tr_('lockedMsg',GOAL,LEVELS[n-3].name);return}
+  const c=LB[id];
   if(c)lbRender(c.rows);else{box.className='';box.textContent=tr_('lbLoading')}
   if(!window.OMA){if(!c)box.textContent=tr_('lbOff');return}
   if(c&&Date.now()-c.t<45000)return;
-  const id=lv.id;
-  OMA.top(id).then(rows=>{LB[id]={t:Date.now(),rows};if(inMenu&&LEVELS[selIdx-1]&&LEVELS[selIdx-1].id===id)lbRender(rows)}).catch(e=>{console.warn('leaderboard load failed',e);if(!LB[id]&&inMenu&&LEVELS[selIdx-1]&&LEVELS[selIdx-1].id===id){box.className='';box.textContent=tr_('lbOff')+(e&&e.code?' ('+e.code+')':'')}});
+  (n===1?OMA.wkTop(id.slice(2)):OMA.top(id)).then(rows=>{LB[id]={t:Date.now(),rows};if(inMenu&&lbId(selIdx)===id)lbRender(rows)}).catch(e=>{console.warn('leaderboard load failed',e);if(!LB[id]&&inMenu&&lbId(selIdx)===id){box.className='';box.textContent=tr_('lbOff')+(e&&e.code?' ('+e.code+')':'')}});
 }
 document.getElementById('cl').onclick=()=>carSel(selIdx-1);
 document.getElementById('cr').onclick=()=>carSel(selIdx+1);
@@ -1489,17 +1540,17 @@ function accRender(){
 }
 document.getElementById('acb').onclick=accOpen;
 addEventListener('oma-user',async e=>{
-  const d=e.detail;AC.user=d.user;
+  const d=e.detail;AC.user=d.user;WKS={};
   if(d.user&&d.remote){progMerge(d.remote);progStore();progSave()}
-  menuRefresh();accRender();if(inMenu&&carItems.length)lbShow();
+  menuRefresh();accRender();if(inMenu&&carItems.length)lbShow();wkSend();
 });
 document.getElementById('mb').onclick=openMenu;
 document.getElementById('rm').onclick=openMenu;
 resize();reset();buildMenu();
-{const tk=document.getElementById('track');carItems.unshift(carItems.pop());tk.insertBefore(tk.lastChild,tk.firstChild)}
-{let n=NaN;try{n=parseInt(localStorage.getItem('om_sel2'))}catch(e){}
+{const tk=document.getElementById('track');carItems.unshift(carItems.pop());tk.insertBefore(tk.lastChild,tk.firstChild);carItems.splice(1,0,carItems.pop());tk.insertBefore(wkEl.b,tk.children[1])} // pořadí: Tutorial, týdenní výzva, mapy
+{let n=NaN;try{n=parseInt(localStorage.getItem('om_sel3'))}catch(e){}
  let tutDone=false;try{tutDone=localStorage.getItem('om_tut')==='1'}catch(e){}
- selIdx=n>=0&&n<carItems.length?n:(!tutDone&&!Object.keys(PROG.best).length?0:2)}
+ selIdx=n>=0&&n<carItems.length?n:(!tutDone&&!Object.keys(PROG.best).length?0:3)}
 applyLang();openMenu();requestAnimationFrame(loop);
 </script>
 <script type="module">
@@ -1523,7 +1574,9 @@ const OMA={
   async save(b){const u=OMA.user;if(!u)return;await setDoc(ref(u),{best:b},{merge:true});
     for(const k of MAPS){const v=b[k]||0;if(v>0&&OMA.sent[k]!==v){try{await setDoc(doc(db,'scores',k,'entries',u.uid),{name:nameOf(u),score:v});OMA.sent[k]=v}catch(e){console.warn('score submit failed',k,e)}}}},
   async top(m){const r=await getDocs(query(collection(db,'scores',m,'entries'),orderBy('score','desc'),limit(20)));return r.docs.map(d=>({uid:d.id,name:d.data().name,score:d.data().score}))},
-  async del(pw){const u=auth.currentUser;await reauthenticateWithCredential(u,EmailAuthProvider.credential(u.email,pw));for(const k of MAPS){try{await deleteDoc(doc(db,'scores',k,'entries',u.uid))}catch(e){}}try{await deleteDoc(ref(u))}catch(e){}await deleteUser(u)}
+  async wkSave(idx,score){const u=OMA.user;if(!u)return;await setDoc(doc(db,'weekly',String(idx),'entries',u.uid),{name:nameOf(u),score})},
+  async wkTop(idx){const r=await getDocs(query(collection(db,'weekly',String(idx),'entries'),orderBy('score','desc'),limit(20)));return r.docs.map(d=>({uid:d.id,name:d.data().name,score:d.data().score}))},
+  async del(pw){const u=auth.currentUser;await reauthenticateWithCredential(u,EmailAuthProvider.credential(u.email,pw));for(const k of MAPS){try{await deleteDoc(doc(db,'scores',k,'entries',u.uid))}catch(e){}}{const wi=Math.floor((Date.now()-Date.UTC(2024,0,1))/6048e5);for(let k=wi-12;k<=wi;k++){try{await deleteDoc(doc(db,'weekly',String(k),'entries',u.uid))}catch(e){}}}try{await deleteDoc(ref(u))}catch(e){}await deleteUser(u)}
 };
 window.OMA=OMA;
 onAuthStateChanged(auth,async u=>{
